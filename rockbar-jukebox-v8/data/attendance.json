@@ -43,5 +43,518 @@
     "origen": "kiosco",
     "notas": null,
     "editadoPor": null
+  },
+  {
+    "id": 6,
+    "empleadoId": 1,
+    "entrada": "2026-07-01T23:00:00.000Z",
+    "salida": "2026-07-02T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 7,
+    "empleadoId": 1,
+    "entrada": "2026-07-02T23:00:00.000Z",
+    "salida": "2026-07-03T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 8,
+    "empleadoId": 1,
+    "entrada": "2026-07-03T23:00:00.000Z",
+    "salida": "2026-07-04T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 9,
+    "empleadoId": 1,
+    "entrada": "2026-07-04T23:00:00.000Z",
+    "salida": "2026-07-05T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 10,
+    "empleadoId": 1,
+    "entrada": "2026-07-05T23:00:00.000Z",
+    "salida": "2026-07-06T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 11,
+    "empleadoId": 1,
+    "entrada": "2026-07-06T23:00:00.000Z",
+    "salida": "2026-07-07T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 12,
+    "empleadoId": 1,
+    "entrada": "2026-07-07T23:00:00.000Z",
+    "salida": "2026-07-08T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 13,
+    "empleadoId": 1,
+    "entrada": "2026-07-08T23:00:00.000Z",
+    "salida": "2026-07-09T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 14,
+    "empleadoId": 1,
+    "entrada": "2026-07-09T23:00:00.000Z",
+    "salida": "2026-07-10T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 15,
+    "empleadoId": 1,
+    "entrada": "2026-07-10T23:00:00.000Z",
+    "salida": "2026-07-11T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 16,
+    "empleadoId": 1,
+    "entrada": "2026-07-11T23:00:00.000Z",
+    "salida": "2026-07-12T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 17,
+    "empleadoId": 1,
+    "entrada": "2026-07-12T23:00:00.000Z",
+    "salida": "2026-07-13T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 18,
+    "empleadoId": 1,
+    "entrada": "2026-07-13T23:00:00.000Z",
+    "salida": "2026-07-14T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 19,
+    "empleadoId": 1,
+    "entrada": "2026-07-14T23:00:00.000Z",
+    "salida": "2026-07-15T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 20,
+    "empleadoId": 1,
+    "entrada": "2026-07-15T23:00:00.000Z",
+    "salida": "2026-07-16T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 21,
+    "empleadoId": 1,
+    "entrada": "2026-07-16T23:00:00.000Z",
+    "salida": "2026-07-17T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 22,
+    "empleadoId": 1,
+    "entrada": "2026-07-17T23:00:00.000Z",
+    "salida": "2026-07-18T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 23,
+    "empleadoId": 1,
+    "entrada": "2026-07-18T23:00:00.000Z",
+    "salida": "2026-07-19T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 24,
+    "empleadoId": 1,
+    "entrada": "2026-07-19T23:00:00.000Z",
+    "salida": "2026-07-20T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 25,
+    "empleadoId": 1,
+    "entrada": "2026-07-20T23:00:00.000Z",
+    "salida": "2026-07-21T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 26,
+    "empleadoId": 1,
+    "entrada": "2026-07-21T23:00:00.000Z",
+    "salida": "2026-07-22T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 27,
+    "empleadoId": 1,
+    "entrada": "2026-07-22T23:00:00.000Z",
+    "salida": "2026-07-23T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 28,
+    "empleadoId": 1,
+    "entrada": "2026-07-23T23:00:00.000Z",
+    "salida": "2026-07-24T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 29,
+    "empleadoId": 1,
+    "entrada": "2026-07-24T23:00:00.000Z",
+    "salida": "2026-07-25T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 30,
+    "empleadoId": 1,
+    "entrada": "2026-07-25T23:00:00.000Z",
+    "salida": "2026-07-26T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 31,
+    "empleadoId": 1,
+    "entrada": "2026-07-26T23:00:00.000Z",
+    "salida": "2026-07-27T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 32,
+    "empleadoId": 1,
+    "entrada": "2026-07-27T23:00:00.000Z",
+    "salida": "2026-07-28T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 33,
+    "empleadoId": 1,
+    "entrada": "2026-07-28T23:00:00.000Z",
+    "salida": "2026-07-29T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 34,
+    "empleadoId": 2,
+    "entrada": "2026-07-02T01:00:00.000Z",
+    "salida": "2026-07-02T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 35,
+    "empleadoId": 2,
+    "entrada": "2026-07-03T01:00:00.000Z",
+    "salida": "2026-07-03T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 36,
+    "empleadoId": 2,
+    "entrada": "2026-07-04T01:00:00.000Z",
+    "salida": "2026-07-04T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 37,
+    "empleadoId": 2,
+    "entrada": "2026-07-05T01:00:00.000Z",
+    "salida": "2026-07-05T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 38,
+    "empleadoId": 2,
+    "entrada": "2026-07-06T01:00:00.000Z",
+    "salida": "2026-07-06T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 39,
+    "empleadoId": 2,
+    "entrada": "2026-07-07T01:00:00.000Z",
+    "salida": "2026-07-07T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 40,
+    "empleadoId": 2,
+    "entrada": "2026-07-08T01:00:00.000Z",
+    "salida": "2026-07-08T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 41,
+    "empleadoId": 2,
+    "entrada": "2026-07-09T01:00:00.000Z",
+    "salida": "2026-07-09T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 42,
+    "empleadoId": 2,
+    "entrada": "2026-07-10T01:00:00.000Z",
+    "salida": "2026-07-10T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 43,
+    "empleadoId": 2,
+    "entrada": "2026-07-11T01:00:00.000Z",
+    "salida": "2026-07-11T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 44,
+    "empleadoId": 2,
+    "entrada": "2026-07-12T01:00:00.000Z",
+    "salida": "2026-07-12T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 45,
+    "empleadoId": 2,
+    "entrada": "2026-07-13T01:00:00.000Z",
+    "salida": "2026-07-13T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 46,
+    "empleadoId": 2,
+    "entrada": "2026-07-14T01:00:00.000Z",
+    "salida": "2026-07-14T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 47,
+    "empleadoId": 2,
+    "entrada": "2026-07-15T01:00:00.000Z",
+    "salida": "2026-07-15T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 48,
+    "empleadoId": 2,
+    "entrada": "2026-07-16T01:00:00.000Z",
+    "salida": "2026-07-16T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 49,
+    "empleadoId": 2,
+    "entrada": "2026-07-17T01:00:00.000Z",
+    "salida": "2026-07-17T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 50,
+    "empleadoId": 2,
+    "entrada": "2026-07-18T01:00:00.000Z",
+    "salida": "2026-07-18T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 51,
+    "empleadoId": 2,
+    "entrada": "2026-07-19T01:00:00.000Z",
+    "salida": "2026-07-19T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 52,
+    "empleadoId": 2,
+    "entrada": "2026-07-20T01:00:00.000Z",
+    "salida": "2026-07-20T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 53,
+    "empleadoId": 2,
+    "entrada": "2026-07-21T01:00:00.000Z",
+    "salida": "2026-07-21T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 54,
+    "empleadoId": 2,
+    "entrada": "2026-07-22T01:00:00.000Z",
+    "salida": "2026-07-22T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 55,
+    "empleadoId": 2,
+    "entrada": "2026-07-23T01:00:00.000Z",
+    "salida": "2026-07-23T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 56,
+    "empleadoId": 2,
+    "entrada": "2026-07-24T01:00:00.000Z",
+    "salida": "2026-07-24T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 57,
+    "empleadoId": 2,
+    "entrada": "2026-07-25T01:00:00.000Z",
+    "salida": "2026-07-25T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 58,
+    "empleadoId": 2,
+    "entrada": "2026-07-26T01:00:00.000Z",
+    "salida": "2026-07-26T07:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 59,
+    "empleadoId": 2,
+    "entrada": "2026-07-27T01:00:00.000Z",
+    "salida": "2026-07-27T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 60,
+    "empleadoId": 2,
+    "entrada": "2026-07-28T01:00:00.000Z",
+    "salida": "2026-07-28T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 61,
+    "empleadoId": 2,
+    "entrada": "2026-07-29T01:00:00.000Z",
+    "salida": "2026-07-29T05:00:00.000Z",
+    "origen": "manual",
+    "notas": "Turno de prueba (seed) para validar calculo de nomina",
+    "editadoPor": "seed-script"
+  },
+  {
+    "id": 62,
+    "empleadoId": 1,
+    "entrada": "2026-07-30T03:36:46.995Z",
+    "salida": null,
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": null
   }
 ]

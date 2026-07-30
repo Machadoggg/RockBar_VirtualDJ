@@ -4,7 +4,7 @@
     "nombre": "Juanito",
     "rol": "Bar tender",
     "pin": "1234",
-    "tarifaPorHora": 6000,
+    "tarifaPorHora": 8338,
     "activo": true,
     "fechaIngreso": "2026-07-29T13:54:53.786Z"
   },
@@ -13,7 +13,7 @@
     "nombre": "Anita",
     "rol": "Mesera",
     "pin": "4321",
-    "tarifaPorHora": 7000,
+    "tarifaPorHora": 8338,
     "activo": true,
     "fechaIngreso": "2026-07-29T14:03:03.581Z"
   }

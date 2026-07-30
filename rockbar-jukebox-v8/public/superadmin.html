@@ -3,104 +3,333 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Jukebox - Superadmin</title>
+<title>Jukebox — Superadmin</title>
 <link rel="stylesheet" href="/style.css" />
 <style>
-  main { max-width: 900px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-  th { color: var(--text-dim); font-weight: 600; }
-  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
-  input[type="password"], input[type="text"], input[type="number"] {
-    padding: 10px; border-radius: 8px; border: 1px solid var(--border);
-    background: var(--bg-card); color: var(--text);
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+
+  /* ---------- Login screen ---------- */
+  .login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
   }
-  button.action { background: var(--red); color: white; border: none; border-radius: 8px; padding: 10px 14px; cursor: pointer; font-weight: 600; }
-  button.secondary { background: var(--bg-card); border: 1px solid var(--border); color: var(--text); }
+  .login-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 36px 32px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+  }
+  .login-card .icon { font-size: 2.2rem; margin-bottom: 10px; }
+  .login-card h1 { font-size: 1.3rem; margin: 0 0 4px; }
+  .login-card p { color: var(--text-dim); font-size: 0.85rem; margin: 0 0 22px; }
+  .login-card input {
+    width: 100%; padding: 11px 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); margin-bottom: 12px; font-size: 0.95rem;
+  }
+  .login-card button {
+    width: 100%; background: var(--red); color: #fff; border: none; border-radius: 8px;
+    padding: 12px; font-weight: 600; cursor: pointer; font-size: 0.95rem;
+  }
+
+  /* ---------- App shell ---------- */
+  .app-shell { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+  }
+  .sidebar .brand {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  .sidebar .brand strong { display: block; font-size: 1.02rem; }
+  .sidebar .brand span { color: var(--text-dim); font-size: 0.75rem; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 20px; color: var(--text-dim); text-decoration: none;
+    font-size: 0.9rem; cursor: pointer; border-left: 3px solid transparent;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .nav-item.active { color: var(--text); border-left-color: var(--red); background: rgba(255,255,255,0.04); font-weight: 600; }
+
+  .sidebar-footer { margin-top: auto; padding: 14px 20px 0; border-top: 1px solid var(--border); }
+  .sidebar-footer button {
+    width: 100%; background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+    padding: 9px; border-radius: 8px; cursor: pointer; font-size: 0.82rem;
+  }
+  .sidebar-footer button:hover { color: var(--text); border-color: var(--text-dim); }
+
+  .main-area { flex: 1; padding: 28px 34px; max-width: 1200px; }
+
+  .page-header { margin-bottom: 22px; }
+  .page-header h2 { margin: 0 0 4px; font-size: 1.5rem; }
+  .page-header p { margin: 0; color: var(--text-dim); font-size: 0.88rem; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ---------- Stat cards ---------- */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .stat-card .label { color: var(--text-dim); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .stat-card .value { font-size: 1.7rem; font-weight: 700; }
+  .stat-card .value.warn { color: #e8b23d; }
+  .stat-card .value.danger { color: var(--red); }
+
+  /* ---------- Panels / cards ---------- */
+  .panel {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 22px 24px; margin-bottom: 22px;
+  }
+  .panel h3 { margin: 0 0 16px; font-size: 1.02rem; display: flex; align-items: center; gap: 8px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); font-size: 0.87rem; }
+  th { color: var(--text-dim); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
   tr.inactive { opacity: 0.45; }
-  .form-box { max-width: 460px; display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  tr:hover td { background: rgba(255,255,255,0.015); }
+
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .field-label { display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; }
+
+  input[type="text"], input[type="number"], input[type="date"], input[type="password"] {
+    padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font-size: 0.9rem;
+  }
+
+  button.action { background: var(--red); color: #fff; border: none; border-radius: 8px; padding: 9px 16px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+  button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 16px; cursor: pointer; font-size: 0.85rem; }
+  button.secondary:hover { border-color: var(--text-dim); }
+  button.small { padding: 6px 12px; font-size: 0.78rem; }
+
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 14px; }
+
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+  .badge.ok { background: rgba(76,140,90,0.15); color: #6fbf7f; }
+  .badge.off { background: rgba(155,155,155,0.12); color: var(--text-dim); }
+
+  .empty-state, .error-state { padding: 14px; text-align: center; color: var(--text-dim); font-size: 0.88rem; }
+  .error-state { color: #e8934d; }
+
+  @media (max-width: 780px) {
+    .app-shell { flex-direction: column; }
+    .sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 10px; }
+    .sidebar .brand, .sidebar-footer { display: none; }
+    .nav-item { border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+    .nav-item.active { border-left-color: transparent; border-bottom-color: var(--red); }
+    .main-area { padding: 20px 16px; }
+  }
 </style>
 </head>
 <body>
-  <header class="topbar">
-    <h1>🔐 Superadmin — Personal</h1>
-    <p class="subtitle">Alta, baja y edicion de empleados</p>
-  </header>
 
-  <main>
-    <div class="row">
+  <!-- ============ LOGIN ============ -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="icon">🔐</div>
+      <h1>Superadmin</h1>
+      <p>Gestion de personal y nomina — Bar-racuda</p>
       <input id="tokenInput" type="password" placeholder="Token de superadmin" />
-      <button class="action" id="loadBtn">Entrar</button>
+      <button id="loadBtn">Entrar</button>
+      <p id="msg" class="error-state" hidden style="margin-top:12px;"></p>
     </div>
+  </div>
 
-    <div id="content" hidden>
-      <table>
-        <thead>
-          <tr><th>Nombre</th><th>Rol</th><th>PIN</th><th>Tarifa/hora</th><th>Estado</th><th></th></tr>
-        </thead>
-        <tbody id="staffBody"></tbody>
-      </table>
-
-      <h2 style="margin-top:30px;">🕐 Turnos fichados</h2>
-      <div id="openShiftsWarning" class="error-state" hidden></div>
-      <table>
-        <thead>
-          <tr><th>Empleado</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Origen</th><th></th></tr>
-        </thead>
-        <tbody id="attendanceBody"></tbody>
-      </table>
-
-
-      <h2 style="margin-top:30px;">💰 Nomina / reportes</h2>
-      <div class="row">
-        <div>
-          <label style="display:block;font-size:.75rem;color:var(--text-dim);margin-bottom:4px;">Desde</label>
-          <input type="date" id="payrollDesde" />
-        </div>
-        <div>
-          <label style="display:block;font-size:.75rem;color:var(--text-dim);margin-bottom:4px;">Hasta</label>
-          <input type="date" id="payrollHasta" />
-        </div>
-        <button class="action secondary" id="quincenaActualBtn">Quincena actual</button>
-        <button class="action secondary" id="quincenaAnteriorBtn">Quincena anterior</button>
-        <button class="action" id="calcularPayrollBtn">Calcular</button>
+  <!-- ============ APP SHELL ============ -->
+  <div class="app-shell" id="appShell" hidden>
+    <aside class="sidebar">
+      <div class="brand">
+        <strong>🎸 Bar-racuda</strong>
+        <span>Panel de superadmin</span>
       </div>
-      
-      <table>
-        <thead>
-          <tr><th>Empleado</th><th>Rol</th><th>Tarifa/hora</th><th>Turnos</th><th>Horas</th><th>Total</th></tr>
-        </thead>
-        <tbody id="payrollBody"></tbody>
-      </table>
-      <p id="payrollWarning" class="error-state" hidden></p>
-      <button class="action secondary" id="exportCsvBtn" style="margin-top:10px;" hidden>⬇️ Exportar CSV</button>
 
+      <div class="nav-item active" data-page="dashboard">📊 Dashboard</div>
+      <div class="nav-item" data-page="staff">👥 Empleados</div>
+      <div class="nav-item" data-page="attendance">🕐 Turnos</div>
+      <div class="nav-item" data-page="payroll">💰 Nomina</div>
 
-      <h2 style="margin-top:26px;" id="formTitle">➕ Nuevo empleado</h2>
-      <div class="form-box">
-        <input type="hidden" id="staffId" />
-        <input id="staffNombre" type="text" placeholder="Nombre *" />
-        <input id="staffRol" type="text" placeholder="Rol (bartender, mesero, dj, seguridad...)" />
-        <input id="staffPin" type="text" placeholder="PIN de 4 digitos *" maxlength="4" />
-        <input id="staffTarifa" type="number" placeholder="Tarifa por hora *" min="0" step="0.01" />
-        <div class="row">
-          <button class="action" id="saveStaffBtn">Guardar</button>
-          <button class="action secondary" id="cancelStaffBtn">Cancelar</button>
-        </div>
-        <p id="staffStatus" class="error-state" hidden></p>
+      <div class="sidebar-footer">
+        <button id="logoutBtn">Cerrar sesion</button>
       </div>
-    </div>
+    </aside>
 
-    <p id="msg" class="error-state" hidden></p>
-  </main>
+    <main class="main-area">
+
+      <!-- ---------- DASHBOARD ---------- -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-header">
+          <h2>Dashboard</h2>
+          <p>Resumen general del personal y la actividad de hoy</p>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="label">Empleados activos</div>
+            <div class="value" id="statActivos">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Turnos abiertos</div>
+            <div class="value warn" id="statAbiertos">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Turnos registrados</div>
+            <div class="value" id="statTotalTurnos">—</div>
+          </div>
+        </div>
+
+        <div class="panel" id="dashOpenShiftsPanel" hidden>
+          <h3>⚠️ Turnos sin cerrar</h3>
+          <table>
+            <thead><tr><th>Empleado</th><th>Entrada</th></tr></thead>
+            <tbody id="dashOpenShiftsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- EMPLEADOS ---------- -->
+      <section class="page" id="page-staff">
+        <div class="page-header">
+          <h2>Empleados</h2>
+          <p>Alta, baja y edicion del personal</p>
+        </div>
+
+        <div class="panel">
+          <h3>👥 Colaboradores</h3>
+          <table>
+            <thead>
+              <tr><th>Nombre</th><th>Rol</th><th>PIN</th><th>Tarifa/hora</th><th>Estado</th><th></th></tr>
+            </thead>
+            <tbody id="staffBody"></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3 id="formTitle">➕ Nuevo empleado</h3>
+          <input type="hidden" id="staffId" />
+          <div class="form-grid">
+            <div>
+              <label class="field-label">Nombre *</label>
+              <input id="staffNombre" type="text" placeholder="Nombre completo" style="width:100%;" />
+            </div>
+            <div>
+              <label class="field-label">Rol</label>
+              <input id="staffRol" type="text" placeholder="bartender, mesero, dj..." style="width:100%;" />
+            </div>
+            <div>
+              <label class="field-label">PIN de 4 digitos *</label>
+              <input id="staffPin" type="text" placeholder="0000" maxlength="4" style="width:100%;" />
+            </div>
+            <div>
+              <label class="field-label">Tarifa por hora *</label>
+              <input id="staffTarifa" type="number" placeholder="6000" min="0" step="0.01" style="width:100%;" />
+            </div>
+          </div>
+          <div class="row">
+            <button class="action" id="saveStaffBtn">Guardar</button>
+            <button class="secondary" id="cancelStaffBtn">Cancelar</button>
+          </div>
+          <p id="staffStatus" class="error-state" hidden></p>
+        </div>
+      </section>
+
+      <!-- ---------- TURNOS ---------- -->
+      <section class="page" id="page-attendance">
+        <div class="page-header">
+          <h2>Turnos fichados</h2>
+          <p>Historial de entradas y salidas registradas</p>
+        </div>
+
+        <div id="openShiftsWarning" class="error-state" hidden style="margin-bottom:14px;"></div>
+
+        <div class="panel">
+          <table>
+            <thead>
+              <tr><th>Empleado</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Origen</th><th></th></tr>
+            </thead>
+            <tbody id="attendanceBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- NOMINA ---------- -->
+      <section class="page" id="page-payroll">
+        <div class="page-header">
+          <h2>Nomina</h2>
+          <p>Calculo de horas y totales por periodo, con recargos de ley</p>
+        </div>
+
+        <div class="panel">
+          <h3>📅 Periodo</h3>
+          <div class="row" style="margin-bottom:6px;">
+            <div>
+              <label class="field-label">Desde</label>
+              <input type="date" id="payrollDesde" />
+            </div>
+            <div>
+              <label class="field-label">Hasta</label>
+              <input type="date" id="payrollHasta" />
+            </div>
+            <button class="secondary" id="quincenaActualBtn" style="align-self:flex-end;">Quincena actual</button>
+            <button class="secondary" id="quincenaAnteriorBtn" style="align-self:flex-end;">Quincena anterior</button>
+            <button class="action" id="calcularPayrollBtn" style="align-self:flex-end;">Calcular</button>
+          </div>
+        </div>
+
+        <p id="payrollWarning" class="error-state" hidden></p>
+
+        <div class="panel">
+          <table>
+            <thead>
+              <tr><th>Empleado</th><th>Rol</th><th>Tarifa/hora</th><th>Turnos</th><th>Horas tot.</th><th>Horas noct.</th><th>Horas dom/fest</th><th>Horas extra</th><th>Total</th></tr>
+            </thead>
+            <tbody id="payrollBody"><tr><td colspan="9" class="empty-state">Elegi un periodo y presiona Calcular.</td></tr></tbody>
+          </table>
+          <div style="margin-top:14px;">
+            <button class="secondary" id="exportCsvBtn" hidden>⬇️ Exportar CSV</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
 
   <script>
+    // ============ Navegacion entre paginas ============
+    document.querySelectorAll('.nav-item').forEach((item) => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach((i) => i.classList.remove('active'));
+        document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
+        item.classList.add('active');
+        document.getElementById('page-' + item.dataset.page).classList.add('active');
+      });
+    });
+
+    // ============ Elementos ============
+    const loginScreen = document.getElementById('loginScreen');
+    const appShell = document.getElementById('appShell');
     const tokenInput = document.getElementById('tokenInput');
     const loadBtn = document.getElementById('loadBtn');
-    const content = document.getElementById('content');
-    const staffBody = document.getElementById('staffBody');
     const msg = document.getElementById('msg');
+    const logoutBtn = document.getElementById('logoutBtn');
 
+    const staffBody = document.getElementById('staffBody');
     const formTitle = document.getElementById('formTitle');
     const staffIdInput = document.getElementById('staffId');
     const staffNombreInput = document.getElementById('staffNombre');
@@ -121,7 +350,14 @@
     const exportCsvBtn = document.getElementById('exportCsvBtn');
     let lastPayrollRange = null;
 
+    const statActivos = document.getElementById('statActivos');
+    const statAbiertos = document.getElementById('statAbiertos');
+    const statTotalTurnos = document.getElementById('statTotalTurnos');
+    const dashOpenShiftsPanel = document.getElementById('dashOpenShiftsPanel');
+    const dashOpenShiftsBody = document.getElementById('dashOpenShiftsBody');
 
+    let currentStaff = [];
+    let currentShifts = [];
 
     function escapeHtml(str) {
       const div = document.createElement('div');
@@ -130,28 +366,42 @@
     }
 
     function getToken() {
-      return tokenInput.value.trim() || sessionStorage.getItem('jukebox_superadmin_token') || '';
+      return tokenInput.value.trim() || localStorage.getItem('jukebox_superadmin_token') || '';
     }
 
-    let currentStaff = [];
+    // ============ Login / logout ============
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('jukebox_superadmin_token');
+      tokenInput.value = '';
+      appShell.hidden = true;
+      loginScreen.hidden = false;
+    });
 
+    loadBtn.addEventListener('click', loadStaff);
+    tokenInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadStaff(); });
+
+    // ============ Staff ============
     async function loadStaff() {
       const token = getToken();
       if (!token) return;
-      sessionStorage.setItem('jukebox_superadmin_token', token);
+      localStorage.setItem('jukebox_superadmin_token', token);
 
       const res = await fetch(`/api/superadmin/staff?token=${encodeURIComponent(token)}`);
       if (!res.ok) {
         msg.hidden = false;
         msg.textContent = 'Token invalido.';
-        content.hidden = true;
+        loginScreen.hidden = false;
+        appShell.hidden = true;
         return;
       }
       msg.hidden = true;
-      content.hidden = false;
+      loginScreen.hidden = true;
+      appShell.hidden = false;
+
       currentStaff = await res.json();
       renderStaff();
-      loadAttendance(); // ← esta línea es la que hace que la tabla de turnos se llene
+      await loadAttendance();
+      renderDashboard();
     }
 
     function renderStaff() {
@@ -164,12 +414,12 @@
           <td>${escapeHtml(s.rol || '-')}</td>
           <td>${escapeHtml(s.pin)}</td>
           <td>$${Number(s.tarifaPorHora).toLocaleString()}</td>
-          <td>${s.activo ? 'Activo' : 'Inactivo'}</td>
+          <td>${s.activo ? '<span class="badge ok">Activo</span>' : '<span class="badge off">Inactivo</span>'}</td>
           <td>
-            <button class="action secondary" data-edit="${s.id}">Editar</button>
+            <button class="secondary small" data-edit="${s.id}">Editar</button>
             ${s.activo
-              ? `<button class="action secondary" data-deactivate="${s.id}">Dar de baja</button>`
-              : `<button class="action secondary" data-reactivate="${s.id}">Reactivar</button>`}
+              ? `<button class="secondary small" data-deactivate="${s.id}">Dar de baja</button>`
+              : `<button class="secondary small" data-reactivate="${s.id}">Reactivar</button>`}
           </td>
         `;
         staffBody.appendChild(tr);
@@ -183,7 +433,7 @@
           staffIdInput.value = s.id;
           staffNombreInput.value = s.nombre;
           staffRolInput.value = s.rol || '';
-          staffPinInput.value = ''; // se deja vacio: solo se cambia si se escribe uno nuevo
+          staffPinInput.value = '';
           staffPinInput.placeholder = `PIN actual: ${s.pin} (dejar vacio para no cambiar)`;
           staffTarifaInput.value = s.tarifaPorHora;
           staffNombreInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -231,9 +481,8 @@
         rol: staffRolInput.value.trim(),
         tarifaPorHora: staffTarifaInput.value,
       };
-      // El PIN solo se manda si se escribio algo (para no pisar el actual al editar).
       if (staffPinInput.value.trim()) payload.pin = staffPinInput.value.trim();
-      if (!id) payload.pin = payload.pin || staffPinInput.value.trim(); // en alta, obligatorio
+      if (!id) payload.pin = payload.pin || staffPinInput.value.trim();
 
       const url = id ? `/api/superadmin/staff/${id}` : '/api/superadmin/staff';
       const method = id ? 'PUT' : 'POST';
@@ -256,83 +505,106 @@
     });
 
     cancelStaffBtn.addEventListener('click', resetForm);
-    loadBtn.addEventListener('click', loadStaff);
 
-    const savedToken = sessionStorage.getItem('jukebox_superadmin_token');
-    if (savedToken) {
-      tokenInput.value = savedToken;
-      loadStaff();
-    }
-
-
+    // ============ Attendance ============
     async function loadAttendance() {
-    const res = await fetch(`/api/superadmin/attendance?token=${encodeURIComponent(getToken())}`);
-    if (!res.ok) return;
-    const shifts = await res.json();
-    renderAttendance(shifts);
-  }
-
-  function fmtDateTime(iso) {
-    if (!iso) return '-';
-    return new Date(iso).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
-  }
-
-  function horasDeTurno(turno) {
-    if (!turno.salida) return '(en curso)';
-    const ms = new Date(turno.salida) - new Date(turno.entrada);
-    return (ms / 3600000).toFixed(2) + 'h';
-  }
-
-  function renderAttendance(shifts) {
-    const empleadosPorId = Object.fromEntries(currentStaff.map((s) => [s.id, s.nombre]));
-
-    const abiertos = shifts.filter((t) => !t.salida);
-    if (abiertos.length) {
-      openShiftsWarning.hidden = false;
-      openShiftsWarning.textContent = `⚠️ Hay ${abiertos.length} turno(s) sin fichar salida.`;
-    } else {
-      openShiftsWarning.hidden = true;
+      const res = await fetch(`/api/superadmin/attendance?token=${encodeURIComponent(getToken())}`);
+      if (!res.ok) return;
+      currentShifts = await res.json();
+      renderAttendance(currentShifts);
     }
 
-    attendanceBody.innerHTML = shifts
-      .map(
-        (t) => `
-      <tr>
-        <td>${escapeHtml(empleadosPorId[t.empleadoId] || '(desconocido)')}</td>
-        <td>${fmtDateTime(t.entrada)}</td>
-        <td>${t.salida ? fmtDateTime(t.salida) : '<em>abierto</em>'}</td>
-        <td>${horasDeTurno(t)}</td>
-        <td>${t.origen}</td>
-        <td><button class="action secondary" data-edit-shift="${t.id}">Editar</button></td>
-      </tr>
-    `
-      )
-      .join('');
+    function fmtDateTime(iso) {
+      if (!iso) return '-';
+      return new Date(iso).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+    }
 
-    attendanceBody.querySelectorAll('[data-edit-shift]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const t = shifts.find((x) => x.id === Number(btn.dataset.editShift));
-        if (!t) return;
-        const nuevaSalida = prompt(
-          `Editar salida de ${empleadosPorId[t.empleadoId]}\n(formato: 2025-01-15T22:30, vacio para dejar abierto)`,
-          t.salida ? t.salida.slice(0, 16) : ''
-        );
-        if (nuevaSalida === null) return; // cancelo
+    function horasDeTurno(turno) {
+      if (!turno.salida) return '(en curso)';
+      const ms = new Date(turno.salida) - new Date(turno.entrada);
+      return (ms / 3600000).toFixed(2) + 'h';
+    }
 
-        const res = await fetch(`/api/superadmin/attendance/${t.id}?token=${encodeURIComponent(getToken())}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ salida: nuevaSalida || null }),
+    function renderAttendance(shifts) {
+      const empleadosPorId = Object.fromEntries(currentStaff.map((s) => [s.id, s.nombre]));
+
+      const abiertos = shifts.filter((t) => !t.salida);
+      if (abiertos.length) {
+        openShiftsWarning.hidden = false;
+        openShiftsWarning.textContent = `⚠️ Hay ${abiertos.length} turno(s) sin fichar salida.`;
+      } else {
+        openShiftsWarning.hidden = true;
+      }
+
+      if (!shifts.length) {
+        attendanceBody.innerHTML = '<tr><td colspan="6" class="empty-state">Todavia no hay turnos registrados.</td></tr>';
+      } else {
+        attendanceBody.innerHTML = shifts
+          .map(
+            (t) => `
+          <tr>
+            <td>${escapeHtml(empleadosPorId[t.empleadoId] || '(desconocido)')}</td>
+            <td>${fmtDateTime(t.entrada)}</td>
+            <td>${t.salida ? fmtDateTime(t.salida) : '<em>abierto</em>'}</td>
+            <td>${horasDeTurno(t)}</td>
+            <td>${t.origen}</td>
+            <td><button class="secondary small" data-edit-shift="${t.id}">Editar</button></td>
+          </tr>
+        `
+          )
+          .join('');
+      }
+
+      attendanceBody.querySelectorAll('[data-edit-shift]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const t = shifts.find((x) => x.id === Number(btn.dataset.editShift));
+          if (!t) return;
+          const nuevaSalida = prompt(
+            `Editar salida de ${empleadosPorId[t.empleadoId]}\n(formato: 2025-01-15T22:30, vacio para dejar abierto)`,
+            t.salida ? t.salida.slice(0, 16) : ''
+          );
+          if (nuevaSalida === null) return;
+
+          const res = await fetch(`/api/superadmin/attendance/${t.id}?token=${encodeURIComponent(getToken())}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ salida: nuevaSalida || null }),
+          });
+          const data = await res.json();
+          if (!data.ok) { alert(data.message); return; }
+          await loadAttendance();
+          renderDashboard();
         });
-        const data = await res.json();
-        if (!data.ok) { alert(data.message); return; }
-        loadAttendance();
       });
-    });
-  }
+    }
 
+    // ============ Dashboard ============
+    function renderDashboard() {
+      const empleadosPorId = Object.fromEntries(currentStaff.map((s) => [s.id, s.nombre]));
+      const activos = currentStaff.filter((s) => s.activo).length;
+      const abiertos = currentShifts.filter((t) => !t.salida);
 
-  //------ Payroll ----------
+      statActivos.textContent = activos;
+      statAbiertos.textContent = abiertos.length;
+      statAbiertos.className = 'value' + (abiertos.length > 0 ? ' warn' : '');
+      statTotalTurnos.textContent = currentShifts.length;
+
+      if (abiertos.length) {
+        dashOpenShiftsPanel.hidden = false;
+        dashOpenShiftsBody.innerHTML = abiertos
+          .map((t) => `
+            <tr>
+              <td>${escapeHtml(empleadosPorId[t.empleadoId] || '(desconocido)')}</td>
+              <td>${fmtDateTime(t.entrada)}</td>
+            </tr>
+          `)
+          .join('');
+      } else {
+        dashOpenShiftsPanel.hidden = true;
+      }
+    }
+
+    // ============ Payroll ============
     function pad(n) { return String(n).padStart(2, '0'); }
     function toDateInputValue(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
 
@@ -344,7 +616,7 @@
         hasta = new Date(now.getFullYear(), now.getMonth(), 15);
       } else {
         desde = new Date(now.getFullYear(), now.getMonth(), 16);
-        hasta = new Date(now.getFullYear(), now.getMonth() + 1, 0); // ultimo dia del mes
+        hasta = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       }
       payrollDesde.value = toDateInputValue(desde);
       payrollHasta.value = toDateInputValue(hasta);
@@ -356,7 +628,7 @@
       if (now.getDate() <= 15) {
         const mesAnterior = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         desde = new Date(mesAnterior.getFullYear(), mesAnterior.getMonth(), 16);
-        hasta = new Date(now.getFullYear(), now.getMonth(), 0); // ultimo dia del mes pasado
+        hasta = new Date(now.getFullYear(), now.getMonth(), 0);
       } else {
         desde = new Date(now.getFullYear(), now.getMonth(), 1);
         hasta = new Date(now.getFullYear(), now.getMonth(), 15);
@@ -395,7 +667,7 @@
       }
 
       if (!data.rows.length) {
-        payrollBody.innerHTML = '<tr><td colspan="6" class="empty-state">Nadie ficho turnos en este rango.</td></tr>';
+        payrollBody.innerHTML = '<tr><td colspan="9" class="empty-state">Nadie ficho turnos en este rango.</td></tr>';
       } else {
         payrollBody.innerHTML = data.rows
           .map(
@@ -405,7 +677,10 @@
             <td>${escapeHtml(r.rol || '-')}</td>
             <td>$${Number(r.tarifaPorHora).toLocaleString()}</td>
             <td>${r.turnos}${r.turnosAbiertos ? ` (${r.turnosAbiertos} abierto)` : ''}</td>
-            <td>${r.horas}h</td>
+            <td>${r.horasTotales}h</td>
+            <td>${r.horasNocturnas}h</td>
+            <td>${r.horasDominicalFestivo}h</td>
+            <td>${r.horasExtra}h</td>
             <td>$${r.total.toLocaleString()}</td>
           </tr>
         `
@@ -424,6 +699,12 @@
       window.open(url, '_blank');
     });
 
+    // ============ Arranque ============
+    const savedToken = localStorage.getItem('jukebox_superadmin_token');
+    if (savedToken) {
+      tokenInput.value = savedToken;
+      loadStaff();
+    }
   </script>
 </body>
 </html>

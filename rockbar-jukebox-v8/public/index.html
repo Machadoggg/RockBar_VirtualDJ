@@ -2,15 +2,193 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
 <title>Jukebox</title>
 <link rel="stylesheet" href="/style.css" />
+<style>
+  /* ============================================================
+     Mejoras mobile-first — capa adicional sobre style.css
+     No se tocan clases/IDs existentes, solo se suman y se ajusta
+     layout para uso con una mano en celular.
+     ============================================================ */
+
+  :root {
+    --nav-h: 64px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  html, body { overscroll-behavior-y: contain; }
+
+  /* ---------- Header sticky compacto ---------- */
+  #mainApp .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 12px 16px 10px;
+    backdrop-filter: blur(10px);
+  }
+
+  #mainApp .brand { display: flex; align-items: center; gap: 70px; margin-top: 5px; }
+  #mainApp .brand-logo { width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0; }
+  #mainApp .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+  #mainApp .brand-name { font-weight: 700; font-size: 1.05rem; }
+  #mainApp .brand-tag { font-size: 0.72rem; color: var(--text-dim, #9a8d83); }
+
+  #mainApp .badges {
+    display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+  }
+  #mainApp .remaining, #mainApp .credits-badge {
+    font-size: 0.76rem; padding: 5px 10px; border-radius: 10px; height: 30px; margin-top: 5px;
+  }
+
+  /* Los botones viejos de header-actions ahora viven en el bottom nav,
+     asi que se ocultan aca arriba sin borrarlos del DOM (app.js sigue
+     encontrandolos por ID y funcionando igual). */
+  #mainApp .header-actions { display: none; }
+
+  /* ---------- Search sticky ---------- */
+  #mainApp .search-wrap {
+    position: sticky;
+    top: var(--header-h, 92px); /* se ajusta solo con JS de abajo */
+    z-index: 15;
+    padding: 8px 0px 10px;
+    background: var(--bg, #0b0a0c);
+  }
+  #mainApp .search-wrap input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+  }
+
+  /* ---------- Lista de canciones: mas aire para el dedo ---------- */
+  #mainApp main { padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 24px); }
+  #mainApp .song-list { padding: 4px 0px; }
+  #mainApp .song-item {
+    padding: 14px 12px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+  #mainApp .add-btn:not(.wide) {
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  /* ---------- Bottom navigation (nuevo) ---------- */
+  .bottom-nav {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 30;
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    height: var(--nav-h);
+    padding-bottom: var(--safe-bottom);
+    background: var(--bg-card, #161110);
+    border-top: 1px solid var(--border, #332821);
+  }
+  .bottom-nav button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    color: var(--text-dim, #9a8d83);
+    font-size: 0.68rem;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 6px 4px;
+    position: relative;
+  }
+  .bottom-nav button .nav-icon { font-size: 1.3rem; line-height: 1; }
+  .bottom-nav button.active { color: var(--red, #c81e3a); }
+  .bottom-nav button .nav-dot {
+    position: absolute;
+    top: 4px;
+    right: calc(50% - 20px);
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--red, #c81e3a);
+    display: none;
+  }
+  .bottom-nav button.has-badge .nav-dot { display: block; }
+
+  /* ---------- Modales como bottom sheet ---------- */
+  .modal-overlay {
+    display: flex !important;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay[hidden] { display: none !important; }
+
+  .modal-overlay .modal-card {
+    width: 100%;
+    max-width: 560px;
+    max-height: 86vh;
+    overflow-y: auto;
+    border-radius: 20px 20px 0 0;
+    padding: 14px 18px calc(22px + var(--safe-bottom));
+    animation: sheetUp 0.22s ease-out;
+  }
+
+  .modal-overlay .modal-card::before {
+    content: '';
+    display: block;
+    width: 40px; height: 4px;
+    border-radius: 3px;
+    background: var(--border, #332821);
+    margin: 4px auto 14px;
+  }
+
+  @keyframes sheetUp {
+    from { transform: translateY(24px); opacity: 0.4; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+  }
+
+  /* Botones grandes de juegos, mas faciles de tocar */
+  .game-hub-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .game-hub-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; padding: 18px 8px; border-radius: 14px;
+    text-align: center; font-size: 0.82rem;
+  }
+  .game-hub-emoji { font-size: 1.8rem; }
+
+  /* ---------- Gate (bienvenida) centrado y comodo en mobile ---------- */
+  .gate {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 20px;
+  }
+  .gate-card { width: 100%; max-width: 420px; }
+  .gate-card .add-btn.wide { padding: 14px; font-size: 1rem; }
+
+  @media (min-width: 700px) {
+    .bottom-nav { display: none; }
+    #mainApp .header-actions { display: flex; }
+    #mainApp main { padding-bottom: 24px; }
+    .modal-overlay { align-items: center; }
+    .modal-overlay .modal-card {
+      border-radius: 16px; max-width: 480px; max-height: 90vh;
+      animation: none;
+    }
+    .modal-overlay .modal-card::before { display: none; }
+  }
+</style>
 </head>
 <body>
 
-  <!-- Pantalla de bienvenida: nombre + sugerencia de seguir Instagram.
-       Se muestra hasta que el dispositivo tenga un nombre guardado para
-       esta noche (ver app.js). -->
+  <!-- Pantalla de bienvenida -->
   <div id="gate" class="gate" hidden>
     <div class="gate-card">
       <h1 id="gateBarName">Jukebox</h1>
@@ -36,24 +214,22 @@
   <!-- App principal -->
   <div id="mainApp" hidden>
     <header class="topbar">
-      <!-- <img src="logo.png" class="brand-logo" id="vinylLogo" alt="Logo" />
-      <h1 id="barName">Jukebox</h1>
-      <p class="subtitle">Elegi tu cancion y sumala al Automix</p> -->
-
       <div class="brand">
         <img src="logo.png" class="brand-logo" id="vinylLogo" alt="Logo" />
         <div class="brand-text">
-            <span class="brand-name" id="barName">El Bar</span>
-            <span class="brand-tag">Clasicos de rock</span>
+          <span class="brand-name" id="barName">El Bar</span>
+          <span class="brand-tag">Clasicos de rock</span>
         </div>
       </div>
-
 
       <div class="badges">
         <span class="remaining" id="remainingInfo">Cargando...</span>
         <span class="credits-badge" id="creditsBadge" hidden>⭐ 0 creditos</span>
       </div>
 
+      <!-- Estos botones se mantienen en el DOM (app.js los busca por ID),
+           pero visualmente se ocultan en mobile: su equivalente vive
+           ahora en la barra inferior. En pantallas grandes reaparecen. -->
       <div class="header-actions">
         <button id="gamesBtn" class="btn-secondary small">🎮 Juegos</button>
         <button id="promoBtn" class="btn-secondary small">🎉 Promociones</button>
@@ -72,14 +248,34 @@
     </main>
 
     <div id="toast" class="toast" hidden></div>
+
+    <!-- Barra de navegacion inferior (mobile) -->
+    <nav class="bottom-nav">
+      <button id="navSongsBtn" class="active">
+        <span class="nav-icon">🎵</span>
+        <span>Canciones</span>
+      </button>
+      <button id="navGamesBtn">
+        <span class="nav-icon">🎮</span>
+        <span>Juegos</span>
+        <span class="nav-dot"></span>
+      </button>
+      <button id="navPromoBtn">
+        <span class="nav-icon">🎉</span>
+        <span>Promos</span>
+      </button>
+      <button id="navIgBtn">
+        <span class="nav-icon">📸</span>
+        <span>Instagram</span>
+      </button>
+    </nav>
   </div>
 
-  <!-- Modal de juegos: primero un menu (hub), cada juego es una vista aparte -->
+  <!-- Modal de juegos -->
   <div id="gameModal" class="modal-overlay" hidden>
     <div class="modal-card">
       <button id="gameCloseBtn" class="modal-close">✕</button>
 
-      <!-- Vista: menu de juegos -->
       <div id="gameHubView">
         <h2>🎮 Juegos</h2>
         <p class="subtitle">Jugá y sumá creditos para pedir mas canciones.</p>
@@ -116,26 +312,21 @@
         </div>
       </div>
 
-      <!-- Vista: Ruleta -->
       <div id="gameWheelView" hidden>
         <button class="game-back-btn" data-back>‹ Juegos</button>
         <h2>Ruleta de creditos</h2>
         <p class="subtitle">Gira y sumá creditos para pedir mas canciones.</p>
-
         <div class="wheel-wrap">
           <div id="wheel" class="wheel"></div>
           <div class="wheel-pointer">▼</div>
         </div>
-
         <button id="spinBtn" class="add-btn wide">Girar</button>
       </div>
 
-      <!-- Vista: Duck Hunt -->
       <div id="gameDuckView" hidden>
         <button class="game-back-btn" data-back>‹ Juegos</button>
         <h2>🦆 Duck Hunt</h2>
         <p class="subtitle">Tocá el pato 3 veces antes de que se te acabe el tiempo.</p>
-
         <div class="duck-stats">
           <span id="duckHits">Aciertos: 0 / 3</span>
           <span id="duckTime">Tiempo: 8s</span>
@@ -143,11 +334,9 @@
         <div id="duckArea" class="duck-area">
           <button id="duckTarget" class="duck-target" hidden>🦆</button>
         </div>
-
         <button id="duckStartBtn" class="add-btn wide">Empezar</button>
       </div>
 
-      <!-- Vista: Trivia Rock -->
       <div id="gameTriviaView" hidden>
         <button class="game-back-btn" data-back>‹ Juegos</button>
         <h2>🎸 Trivia Rock</h2>
@@ -155,7 +344,6 @@
         <div id="triviaOptions" class="trivia-options"></div>
       </div>
 
-      <!-- Vista: Duck Hunt Pro -->
       <div id="gameDuckHuntView" hidden>
         <button class="game-back-btn" data-back>‹ Juegos</button>
         <h2>🦆🔫 Duck Hunt Pro</h2>
@@ -168,7 +356,6 @@
         <button id="duckHuntClaimBtn" class="add-btn wide">Ya jugué, sumar crédito</button>
       </div>
 
-      <!-- Vista: Beer Jump -->
       <div id="gameBeerJumpView" hidden>
         <button class="game-back-btn" data-back>‹ Juegos</button>
         <h2>🍺 Beer Jump</h2>
@@ -181,7 +368,6 @@
         <button id="beerJumpClaimBtn" class="add-btn wide">Ya jugué, sumar crédito</button>
       </div>
 
-      <!-- Vista: Othello -->
       <div id="gameOthelloView" hidden>
         <button class="game-back-btn" data-back>‹ Juegos</button>
         <h2>♟️ Othello</h2>
@@ -194,12 +380,10 @@
         <button id="othelloClaimBtn" class="add-btn wide">Ya jugué, sumar crédito</button>
       </div>
 
-      <!-- Comun a los 3 juegos -->
       <p id="gameResult" class="ig-status" hidden></p>
       <p id="gameCooldownMsg" class="empty-state" hidden></p>
     </div>
   </div>
-
 
   <!-- Modal de promociones -->
   <div id="promoModal" class="modal-overlay" hidden>
@@ -221,7 +405,66 @@
     </div>
   </div>
 
-
   <script src="/app.js"></script>
+  <script>
+    // ---------- Bottom nav: delega a los botones reales de siempre ----------
+    // No duplica logica: gamesBtn/promoBtn/igHeaderBtn siguen siendo los
+    // que abren cada modal en app.js. Estos solo simulan el click y
+    // manejan el estado visual "activo" de la barra inferior.
+    (function () {
+      const navSongs = document.getElementById('navSongsBtn');
+      const navGames = document.getElementById('navGamesBtn');
+      const navPromo = document.getElementById('navPromoBtn');
+      const navIg = document.getElementById('navIgBtn');
+
+      const navButtons = [navSongs, navGames, navPromo, navIg];
+
+      function setActive(btn) {
+        navButtons.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+
+      navSongs.addEventListener('click', () => {
+        setActive(navSongs);
+        document.getElementById('mainApp').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+
+      navGames.addEventListener('click', () => {
+        document.getElementById('gamesBtn').click();
+      });
+
+      navPromo.addEventListener('click', () => {
+        document.getElementById('promoBtn').click();
+      });
+
+      navIg.addEventListener('click', () => {
+        document.getElementById('igHeaderBtn').click();
+      });
+
+      // Cuando se cierra cualquier modal, volver a marcar "Canciones" como activo.
+      const gameCloseBtn = document.getElementById('gameCloseBtn');
+      const promoCloseBtn = document.getElementById('promoCloseBtn');
+      if (gameCloseBtn) gameCloseBtn.addEventListener('click', () => setActive(navSongs));
+      if (promoCloseBtn) promoCloseBtn.addEventListener('click', () => setActive(navSongs));
+    })();
+
+    function ajustarStickyOffsets() {
+    const topbar = document.querySelector('#mainApp .topbar');
+    if (!topbar) return;
+    document.documentElement.style.setProperty('--header-h', topbar.offsetHeight + 'px');
+  }
+
+  window.addEventListener('load', ajustarStickyOffsets);
+  window.addEventListener('resize', ajustarStickyOffsets);
+
+  // El header puede cambiar de alto cuando llegan los datos de /api/status
+  // (aparece el badge de creditos, cambia el texto de "canciones restantes").
+  // Un observer detecta esos cambios de tamaño automaticamente.
+  const topbarEl = document.querySelector('#mainApp .topbar');
+  if (topbarEl && window.ResizeObserver) {
+    new ResizeObserver(ajustarStickyOffsets).observe(topbarEl);
+  }
+    
+  </script>
 </body>
 </html>

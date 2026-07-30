@@ -1,11 +1,96 @@
 const staff = require('./staff');
 const attendance = require('./attendance');
+const { isSundayOrHoliday } = require('./holidays');
 
-function hoursOf(turno) {
-  // Turnos sin salida (todavia en curso) no suman horas hasta que se cierren.
-  if (!turno.salida) return 0;
-  const ms = new Date(turno.salida) - new Date(turno.entrada);
-  return ms / 3600000;
+// Multiplicadores sobre el valor de la hora ordinaria diurna
+// (tarifaPorHora del empleado). Valores segun la normativa vigente
+// desde julio 2026 (jornada de 42h/semana).
+const MULT = {
+  ordinaryDay: 1.0,      // hora ordinaria diurna (base)
+  ordinaryNight: 1.35,   // recargo nocturno (35%)
+  ordinaryDaySH: 1.90,   // dominical/festivo diurno (90%)
+  ordinaryNightSH: 2.25, // dominical/festivo nocturno (125%)
+  extraDay: 1.25,        // hora extra diurna (25%)
+  extraNight: 1.75,      // hora extra nocturna (75%)
+  extraDaySH: 2.15,      // hora extra diurna dominical/festiva (115%)
+  extraNightSH: 2.65,    // hora extra nocturna dominical/festiva (165%)
+};
+
+const NIGHT_START_HOUR = 19; // 7:00 p.m.
+const NIGHT_END_HOUR = 6;    // 6:00 a.m.
+
+// Umbral de horas ordinarias POR TURNO (no semanal). Es una
+// simplificacion: la ley define la hora extra sobre el limite semanal
+// (42h), que depende de como se reparten los turnos de cada empleado
+// en la semana. Contarlo por turno individual es razonable para un bar
+// donde no suele haber turnos partidos el mismo dia, pero si algun
+// empleado hace mas de un turno en un mismo dia, este calculo puede no
+// coincidir exactamente con el limite legal semanal — conviene
+// validarlo con un contador antes de pagar.
+const ORDINARY_MINUTES_PER_SHIFT = 8 * 60;
+
+function isNightMinute(date) {
+  const h = date.getHours();
+  return h >= NIGHT_START_HOUR || h < NIGHT_END_HOUR;
+}
+
+/**
+ * Clasifica cada minuto de un turno cerrado en una de las 8 categorias
+ * legales, avanzando minuto a minuto (asi el cruce de medianoche y el
+ * cambio domingo/festivo quedan siempre bien ubicados en el dia
+ * calendario que corresponde).
+ */
+function classifyShiftMinutes(turno) {
+  if (!turno.salida) return null; // turno abierto: no se cuenta todavia
+
+  const start = new Date(turno.entrada);
+  const end = new Date(turno.salida);
+  const totalMinutes = Math.round((end - start) / 60000);
+  if (totalMinutes <= 0) return null;
+
+  const buckets = {
+    ordinaryDay: 0, ordinaryNight: 0, ordinaryDaySH: 0, ordinaryNightSH: 0,
+    extraDay: 0, extraNight: 0, extraDaySH: 0, extraNightSH: 0,
+  };
+
+  let cursor = start.getTime();
+  for (let i = 0; i < totalMinutes; i++) {
+    const cursorDate = new Date(cursor);
+    const night = isNightMinute(cursorDate);
+    const sh = isSundayOrHoliday(cursorDate);
+    const ordinary = i < ORDINARY_MINUTES_PER_SHIFT;
+
+    let key;
+    if (ordinary) {
+      key = sh ? (night ? 'ordinaryNightSH' : 'ordinaryDaySH') : (night ? 'ordinaryNight' : 'ordinaryDay');
+    } else {
+      key = sh ? (night ? 'extraNightSH' : 'extraDaySH') : (night ? 'extraNight' : 'extraDay');
+    }
+    buckets[key]++;
+    cursor += 60000;
+  }
+
+  return buckets;
+}
+
+function sumBuckets(a, b) {
+  const out = {};
+  for (const key of Object.keys(MULT)) out[key] = (a[key] || 0) + (b[key] || 0);
+  return out;
+}
+
+function emptyBuckets() {
+  const out = {};
+  for (const key of Object.keys(MULT)) out[key] = 0;
+  return out;
+}
+
+function payFromBuckets(buckets, tarifaPorHora) {
+  let total = 0;
+  for (const key of Object.keys(MULT)) {
+    total += (buckets[key] / 60) * tarifaPorHora * MULT[key];
+  }
+  return total;
 }
 
 function isWithinRange(turno, desde, hasta) {
@@ -13,12 +98,6 @@ function isWithinRange(turno, desde, hasta) {
   return entrada >= desde.getTime() && entrada <= hasta.getTime();
 }
 
-/**
- * Totaliza horas y pago estimado por empleado en un rango de fechas.
- * Incluye empleados inactivos si tuvieron turnos en ese rango (por si
- * alguien se dio de baja a mitad de la quincena, sus horas previas
- * igual deben aparecer en el reporte).
- */
 function computeTotals(desdeStr, hastaStr) {
   const desde = new Date(desdeStr);
   const hasta = new Date(hastaStr);
@@ -34,11 +113,22 @@ function computeTotals(desdeStr, hastaStr) {
       const shiftsDelEmpleado = allShifts.filter(
         (t) => t.empleadoId === emp.id && isWithinRange(t, desde, hasta)
       );
-      if (!shiftsDelEmpleado.length) return null; // no trabajo en este rango, no aparece
+      if (!shiftsDelEmpleado.length) return null;
 
       const turnosAbiertos = shiftsDelEmpleado.filter((t) => !t.salida).length;
-      const horas = shiftsDelEmpleado.reduce((sum, t) => sum + hoursOf(t), 0);
-      const total = horas * emp.tarifaPorHora;
+      let buckets = emptyBuckets();
+
+      for (const t of shiftsDelEmpleado) {
+        const b = classifyShiftMinutes(t);
+        if (b) buckets = sumBuckets(buckets, b);
+      }
+
+      const horasTotales = Object.values(buckets).reduce((s, m) => s + m, 0) / 60;
+      const horasNocturnas = (buckets.ordinaryNight + buckets.ordinaryNightSH + buckets.extraNight + buckets.extraNightSH) / 60;
+      const horasDominicalFestivo = (buckets.ordinaryDaySH + buckets.ordinaryNightSH + buckets.extraDaySH + buckets.extraNightSH) / 60;
+      const horasExtra = (buckets.extraDay + buckets.extraNight + buckets.extraDaySH + buckets.extraNightSH) / 60;
+
+      const total = payFromBuckets(buckets, emp.tarifaPorHora);
 
       return {
         empleadoId: emp.id,
@@ -47,7 +137,10 @@ function computeTotals(desdeStr, hastaStr) {
         tarifaPorHora: emp.tarifaPorHora,
         turnos: shiftsDelEmpleado.length,
         turnosAbiertos,
-        horas: Math.round(horas * 100) / 100,
+        horasTotales: Math.round(horasTotales * 100) / 100,
+        horasNocturnas: Math.round(horasNocturnas * 100) / 100,
+        horasDominicalFestivo: Math.round(horasDominicalFestivo * 100) / 100,
+        horasExtra: Math.round(horasExtra * 100) / 100,
         total: Math.round(total),
       };
     })
@@ -57,7 +150,10 @@ function computeTotals(desdeStr, hastaStr) {
 }
 
 function toCsv(rows) {
-  const header = ['Empleado', 'Rol', 'Tarifa/hora', 'Turnos', 'Turnos abiertos', 'Horas', 'Total a pagar'];
+  const header = [
+    'Empleado', 'Rol', 'Tarifa/hora', 'Turnos', 'Turnos abiertos',
+    'Horas totales', 'Horas nocturnas', 'Horas dominical/festivo', 'Horas extra', 'Total a pagar',
+  ];
   const lines = [header.join(',')];
   for (const r of rows) {
     lines.push(
@@ -67,7 +163,10 @@ function toCsv(rows) {
         r.tarifaPorHora,
         r.turnos,
         r.turnosAbiertos,
-        r.horas,
+        r.horasTotales,
+        r.horasNocturnas,
+        r.horasDominicalFestivo,
+        r.horasExtra,
         r.total,
       ].join(',')
     );
@@ -75,4 +174,4 @@ function toCsv(rows) {
   return lines.join('\n');
 }
 
-module.exports = { computeTotals, toCsv };
+module.exports = { computeTotals, toCsv, MULT };

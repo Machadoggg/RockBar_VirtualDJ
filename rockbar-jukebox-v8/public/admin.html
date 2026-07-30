@@ -3,97 +3,328 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Jukebox - Admin</title>
+<title>Jukebox — Admin</title>
 <link rel="stylesheet" href="/style.css" />
 <style>
-  main { max-width: 800px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-  th { color: var(--text-dim); font-weight: 600; }
-  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
-  input[type="password"], input[type="text"] {
-    padding: 10px; border-radius: 8px; border: 1px solid var(--border);
-    background: var(--bg-card); color: var(--text);
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+
+  /* ---------- Login screen ---------- */
+  .login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
   }
-  button.action {
-    background: var(--red); color: white; border: none; border-radius: 8px;
-    padding: 10px 14px; cursor: pointer; font-weight: 600;
+  .login-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 36px 32px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
   }
-  button.secondary { background: var(--bg-card); border: 1px solid var(--border); color: var(--text); }
-  .qr-box { text-align: center; margin-top: 20px; }
-  .qr-box img { max-width: 260px; width: 100%; border-radius: 12px; background: white; padding: 10px; }
+  .login-card .icon { font-size: 2.2rem; margin-bottom: 10px; }
+  .login-card h1 { font-size: 1.3rem; margin: 0 0 4px; }
+  .login-card p { color: var(--text-dim); font-size: 0.85rem; margin: 0 0 22px; }
+  .login-card input {
+    width: 100%; padding: 11px 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); margin-bottom: 12px; font-size: 0.95rem;
+  }
+  .login-card button {
+    width: 100%; background: var(--red); color: #fff; border: none; border-radius: 8px;
+    padding: 12px; font-weight: 600; cursor: pointer; font-size: 0.95rem;
+  }
+
+  /* ---------- App shell ---------- */
+  .app-shell { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+  }
+  .sidebar .brand {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  .sidebar .brand strong { display: block; font-size: 1.02rem; }
+  .sidebar .brand span { color: var(--text-dim); font-size: 0.75rem; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 20px; color: var(--text-dim); text-decoration: none;
+    font-size: 0.9rem; cursor: pointer; border-left: 3px solid transparent;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .nav-item.active { color: var(--text); border-left-color: var(--red); background: rgba(255,255,255,0.04); font-weight: 600; }
+
+  .sidebar-footer { margin-top: auto; padding: 14px 20px 0; border-top: 1px solid var(--border); }
+  .sidebar-footer button {
+    width: 100%; background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+    padding: 9px; border-radius: 8px; cursor: pointer; font-size: 0.82rem;
+  }
+  .sidebar-footer button:hover { color: var(--text); border-color: var(--text-dim); }
+
+  .main-area { flex: 1; padding: 28px 34px; max-width: 1200px; }
+
+  .page-header { margin-bottom: 22px; }
+  .page-header h2 { margin: 0 0 4px; font-size: 1.5rem; }
+  .page-header p { margin: 0; color: var(--text-dim); font-size: 0.88rem; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ---------- Stat cards ---------- */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .stat-card .label { color: var(--text-dim); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .stat-card .value { font-size: 1.7rem; font-weight: 700; }
+  .stat-card .value.warn { color: #e8b23d; }
+
+  /* ---------- Panels ---------- */
+  .panel {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 22px 24px; margin-bottom: 22px;
+  }
+  .panel h3 { margin: 0 0 16px; font-size: 1.02rem; display: flex; align-items: center; gap: 8px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); font-size: 0.87rem; }
+  th { color: var(--text-dim); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  tr:hover td { background: rgba(255,255,255,0.015); }
+
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .field-label { display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; }
+
+  input[type="text"], input[type="password"] {
+    padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font-size: 0.9rem;
+  }
+
+  button.action { background: var(--red); color: #fff; border: none; border-radius: 8px; padding: 9px 16px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+  button.danger { background: #8b0000; color: #fff; border: none; border-radius: 8px; padding: 9px 16px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+  button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 16px; cursor: pointer; font-size: 0.85rem; }
+  button.secondary:hover { border-color: var(--text-dim); }
+  button.small { padding: 6px 12px; font-size: 0.78rem; }
+
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .form-grid.narrow { grid-template-columns: 1fr; max-width: 420px; }
+
+  .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin-bottom: 14px; }
+  .checkbox-row input { width: auto; }
+
+  .ad-item {
+    display: flex; justify-content: space-between; align-items: center;
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;
+  }
+  .ad-item.inactive { opacity: 0.5; }
+  .ad-badge { font-size: .7rem; background: var(--red); color: #fff; padding: 2px 8px; border-radius: 12px; }
+
+  .empty-state, .error-state { padding: 14px; text-align: center; color: var(--text-dim); font-size: 0.88rem; }
+  .error-state { color: #e8934d; }
+
+  .qr-box { text-align: center; }
+  .qr-box img { max-width: 220px; width: 100%; border-radius: 12px; background: white; padding: 10px; }
+
+  @media (max-width: 780px) {
+    .app-shell { flex-direction: column; }
+    .sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 10px; }
+    .sidebar .brand, .sidebar-footer { display: none; }
+    .nav-item { border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+    .nav-item.active { border-left-color: transparent; border-bottom-color: var(--red); }
+    .main-area { padding: 20px 16px; }
+  }
 </style>
 </head>
 <body>
-  <header class="topbar">
-    <h1>🎛 Panel del DJ</h1>
-    <p class="subtitle">Pedidos de la noche y codigo QR</p>
-  </header>
 
-  <main>
-    <div class="row">
+  <!-- ============ LOGIN ============ -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="icon">🎛</div>
+      <h1>Panel del DJ</h1>
+      <p>Pedidos, publicidad y codigo QR — Bar-racuda</p>
       <input id="tokenInput" type="password" placeholder="Token de administrador" />
-      <button class="action" id="loadBtn">Entrar</button>
+      <button id="loadBtn">Entrar</button>
+      <p id="msg" class="error-state" hidden style="margin-top:12px;"></p>
     </div>
+  </div>
 
-    <div id="content" hidden>
-      <h2 style="margin-top:30px;">📢 Pedidos / canciones</h2>
-      <div class="row">
-        <button class="action" id="resetAllBtn">Resetear TODOS los contadores de hoy</button>
-        <button class="action" id="wipeAllBtn" style="background:#8b0000;">🗑️ Borrar TODOS los registros (fin de noche)</button>
+  <!-- ============ APP SHELL ============ -->
+  <div class="app-shell" id="appShell" hidden>
+    <aside class="sidebar">
+      <div class="brand">
+        <strong>🎸 Bar-racuda</strong>
+        <span>Panel del DJ</span>
       </div>
 
-      <table>
-        <thead>
-          <tr><th>Nombre</th><th>Dispositivo</th><th>IP</th><th>Pedidos</th><th>Creditos</th><th>Instagram</th><th>Ultimo pedido</th><th></th></tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
+      <div class="nav-item active" data-page="dashboard">📊 Dashboard</div>
+      <div class="nav-item" data-page="pedidos">🎵 Pedidos</div>
+      <div class="nav-item" data-page="publicidad">📢 Publicidad</div>
+      <div class="nav-item" data-page="qr">🔗 Codigo QR</div>
 
-      <div id="adsSection" hidden>
-        <h2 style="margin-top:30px;">📢 Publicidad / promociones</h2>
-      
-        <div id="adsListWrap"></div>
-      
-        <div class="row" style="flex-direction:column; align-items:stretch; max-width:420px;">
+      <div class="sidebar-footer">
+        <button id="logoutBtn">Cerrar sesion</button>
+      </div>
+    </aside>
+
+    <main class="main-area">
+
+      <!-- ---------- DASHBOARD ---------- -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-header">
+          <h2>Dashboard</h2>
+          <p>Resumen de la noche</p>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="label">Dispositivos hoy</div>
+            <div class="value" id="statDevices">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Pedidos totales</div>
+            <div class="value" id="statRequests">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Anuncios activos</div>
+            <div class="value" id="statAds">—</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>🎵 Ultimos pedidos</h3>
+          <table>
+            <thead><tr><th>Nombre</th><th>Pedidos</th><th>Ultimo pedido</th></tr></thead>
+            <tbody id="dashRecentBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- PEDIDOS ---------- -->
+      <section class="page" id="page-pedidos">
+        <div class="page-header">
+          <h2>Pedidos / canciones</h2>
+          <p>Contadores por dispositivo de la noche actual</p>
+        </div>
+
+        <div class="row" style="margin-bottom:18px;">
+          <button class="action" id="resetAllBtn">Resetear TODOS los contadores de hoy</button>
+          <button class="danger" id="wipeAllBtn">🗑️ Borrar TODOS los registros (fin de noche)</button>
+        </div>
+
+        <div class="panel">
+          <table>
+            <thead>
+              <tr><th>Nombre</th><th>Dispositivo</th><th>IP</th><th>Pedidos</th><th>Creditos</th><th>Instagram</th><th>Ultimo pedido</th><th></th></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------- PUBLICIDAD ---------- -->
+      <section class="page" id="page-publicidad">
+        <div class="page-header">
+          <h2>Publicidad / promociones</h2>
+          <p>Anuncios que ven los clientes en el carrusel</p>
+        </div>
+
+        <div class="panel">
+          <h3>📢 Anuncios cargados</h3>
+          <div id="adsListWrap"></div>
+        </div>
+
+        <div class="panel">
+          <h3 id="adFormTitle">➕ Nuevo anuncio</h3>
           <input type="hidden" id="adId" />
-          <input id="adTitle" type="text" placeholder="Titulo *" />
-          <input id="adDesc" type="text" placeholder="Descripcion" />
-          <input id="adImage" type="text" placeholder="URL de imagen (opcional)" />
-          <input id="adEmoji" type="text" placeholder="Emoji si no hay imagen (ej: 🍺)" maxlength="4" />
-          <input id="adBadge" type="text" placeholder="Etiqueta (ej: 2x1, Nuevo)" />
-          <input id="adOrder" type="text" placeholder="Orden (numero, menor = primero)" value="0" />
-          <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem;">
-            <input type="checkbox" id="adActive" checked style="width:auto;" />
-            Mostrar a los clientes
-          </label>
-          <div class="row" style="margin-top:6px;">
+          <div class="form-grid">
+            <div>
+              <label class="field-label">Titulo *</label>
+              <input id="adTitle" type="text" placeholder="Ej: Cerveza Stout Imperial" style="width:100%;" />
+            </div>
+            <div>
+              <label class="field-label">Etiqueta</label>
+              <input id="adBadge" type="text" placeholder="2x1, Nuevo..." style="width:100%;" />
+            </div>
+            <div>
+              <label class="field-label">Emoji si no hay imagen</label>
+              <input id="adEmoji" type="text" placeholder="🍺" maxlength="4" style="width:100%;" />
+            </div>
+            <div>
+              <label class="field-label">Orden (menor = primero)</label>
+              <input id="adOrder" type="text" placeholder="0" style="width:100%;" />
+            </div>
+          </div>
+          <label class="field-label">Descripcion</label>
+          <input id="adDesc" type="text" placeholder="Descripcion breve" style="width:100%; margin-bottom:14px;" />
+          <label class="field-label">URL de imagen (opcional)</label>
+          <input id="adImage" type="text" placeholder="https://..." style="width:100%; margin-bottom:14px;" />
+
+          <div class="checkbox-row">
+            <input type="checkbox" id="adActive" checked />
+            <label for="adActive">Mostrar a los clientes</label>
+          </div>
+
+          <div class="row">
             <button class="action" id="saveAdBtn">Guardar anuncio</button>
-            <button class="action secondary" id="cancelAdBtn">Cancelar</button>
+            <button class="secondary" id="cancelAdBtn">Cancelar</button>
           </div>
           <p id="adStatus" class="error-state" hidden></p>
         </div>
-      </div>
+      </section>
 
-      <div class="qr-box">
-        <p>Codigo QR para imprimir en las mesas:</p>
-        <img id="qrImg" src="/qr.png" alt="QR" />
-      </div>
-    </div>
+      <!-- ---------- QR ---------- -->
+      <section class="page" id="page-qr">
+        <div class="page-header">
+          <h2>Codigo QR</h2>
+          <p>Para imprimir y colocar en las mesas</p>
+        </div>
 
-    <p id="msg" class="error-state" hidden></p>
-  </main>
+        <div class="panel qr-box">
+          <img id="qrImg" src="/qr.png" alt="QR" />
+        </div>
+      </section>
+
+    </main>
+  </div>
 
   <script>
+    // ============ Navegacion entre paginas ============
+    document.querySelectorAll('.nav-item').forEach((item) => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach((i) => i.classList.remove('active'));
+        document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
+        item.classList.add('active');
+        document.getElementById('page-' + item.dataset.page).classList.add('active');
+      });
+    });
+
+    // ============ Elementos ============
+    const loginScreen = document.getElementById('loginScreen');
+    const appShell = document.getElementById('appShell');
     const tokenInput = document.getElementById('tokenInput');
     const loadBtn = document.getElementById('loadBtn');
-    const content = document.getElementById('content');
-    const tableBody = document.getElementById('tableBody');
     const msg = document.getElementById('msg');
-    const resetAllBtn = document.getElementById('resetAllBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
 
-    const adsSection = document.getElementById('adsSection');
+    const tableBody = document.getElementById('tableBody');
+    const resetAllBtn = document.getElementById('resetAllBtn');
+    const wipeAllBtn = document.getElementById('wipeAllBtn');
+
     const adsListWrap = document.getElementById('adsListWrap');
+    const adFormTitle = document.getElementById('adFormTitle');
     const adIdInput = document.getElementById('adId');
     const adTitleInput = document.getElementById('adTitle');
     const adDescInput = document.getElementById('adDesc');
@@ -106,6 +337,14 @@
     const cancelAdBtn = document.getElementById('cancelAdBtn');
     const adStatus = document.getElementById('adStatus');
 
+    const statDevices = document.getElementById('statDevices');
+    const statRequests = document.getElementById('statRequests');
+    const statAds = document.getElementById('statAds');
+    const dashRecentBody = document.getElementById('dashRecentBody');
+
+    let currentDevices = [];
+    let currentAds = [];
+
     function escapeHtml(str) {
       const div = document.createElement('div');
       div.textContent = str;
@@ -116,6 +355,19 @@
       return tokenInput.value.trim() || localStorage.getItem('jukebox_admin_token') || '';
     }
 
+    // ============ Login / logout ============
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('jukebox_admin_token');
+      tokenInput.value = '';
+      appShell.hidden = true;
+      loginScreen.hidden = false;
+      stopAutoRefresh();
+    });
+
+    loadBtn.addEventListener('click', loadSummary);
+    tokenInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadSummary(); });
+
+    // ============ Auto-refresh ============
     let refreshTimer = null;
     const AUTO_REFRESH_MS = 10000;
 
@@ -129,6 +381,7 @@
       refreshTimer = setInterval(loadSummary, AUTO_REFRESH_MS);
     }
 
+    // ============ Pedidos ============
     async function loadSummary() {
       const token = getToken();
       if (!token) return;
@@ -138,14 +391,18 @@
       if (!res.ok) {
         msg.hidden = false;
         msg.textContent = 'Token invalido.';
-        content.hidden = true;
+        loginScreen.hidden = false;
+        appShell.hidden = true;
         stopAutoRefresh();
         return;
       }
       msg.hidden = true;
-      content.hidden = false;
+      loginScreen.hidden = true;
+      appShell.hidden = false;
       startAutoRefresh();
+
       const data = await res.json();
+      currentDevices = data.devices;
 
       tableBody.innerHTML = '';
       for (const d of data.devices) {
@@ -158,7 +415,7 @@
           <td>${d.credits}</td>
           <td>${d.instagramClaimed ? '✓' : '-'}</td>
           <td>${d.lastRequestAt ? new Date(d.lastRequestAt).toLocaleTimeString() : '-'}</td>
-          <td><button class="action secondary" data-device="${d.deviceId}">Resetear</button></td>
+          <td><button class="secondary small" data-device="${d.deviceId}">Resetear</button></td>
         `;
         tableBody.appendChild(tr);
       }
@@ -173,19 +430,46 @@
           loadSummary();
         });
       });
-      loadAds(); // ← agregar esta linea al final de loadSummary
+
+      await loadAds();
+      renderDashboard();
     }
 
+    resetAllBtn.addEventListener('click', async () => {
+      await fetch('/api/admin/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: getToken() }),
+      });
+      loadSummary();
+    });
 
+    wipeAllBtn.addEventListener('click', async () => {
+      const sure = confirm(
+        'Esto borra TODO: nombres, pedidos, creditos e Instagram de todos los clientes de hoy.\n\n' +
+        'Usalo solo al cerrar el bar. ¿Continuar?'
+      );
+      if (!sure) return;
 
-      async function loadAds() {
+      const reallySure = confirm('Ultima confirmacion: esta accion no se puede deshacer. ¿Borrar todo?');
+      if (!reallySure) return;
+
+      await fetch('/api/admin/wipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: getToken() }),
+      });
+      loadSummary();
+    });
+
+    // ============ Publicidad ============
+    async function loadAds() {
       const token = getToken();
       if (!token) return;
       const res = await fetch(`/api/admin/ads?token=${encodeURIComponent(token)}`);
       if (!res.ok) return;
-      const list = await res.json();
-      renderAdsList(list);
-      adsSection.hidden = false;
+      currentAds = await res.json();
+      renderAdsList(currentAds);
     }
 
     function renderAdsList(list) {
@@ -196,16 +480,16 @@
       adsListWrap.innerHTML = list
         .map(
           (ad) => `
-        <div style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border); border-radius:8px; padding:10px 14px; margin-bottom:8px; ${ad.isActive ? '' : 'opacity:.5;'}">
+        <div class="ad-item ${ad.isActive ? '' : 'inactive'}">
           <div>
             <strong>${escapeHtml(ad.emoji || '🍺')} ${escapeHtml(ad.title)}</strong>
-            ${ad.badge ? ` <span style="font-size:.7rem; background:var(--red); color:white; padding:2px 8px; border-radius:12px;">${escapeHtml(ad.badge)}</span>` : ''}
+            ${ad.badge ? ` <span class="ad-badge">${escapeHtml(ad.badge)}</span>` : ''}
             <div style="color:var(--text-dim); font-size:.85rem;">${escapeHtml(ad.description || '')}</div>
             <div style="color:var(--text-dim); font-size:.75rem;">${ad.isActive ? 'Activo' : 'Oculto'} · orden ${ad.displayOrder}</div>
           </div>
           <div style="display:flex; gap:6px;">
-            <button class="action secondary" data-edit-ad="${ad.id}">Editar</button>
-            <button class="action secondary" data-delete-ad="${ad.id}">Eliminar</button>
+            <button class="secondary small" data-edit-ad="${ad.id}">Editar</button>
+            <button class="secondary small" data-delete-ad="${ad.id}">Eliminar</button>
           </div>
         </div>
       `
@@ -216,6 +500,7 @@
         btn.addEventListener('click', () => {
           const ad = list.find((a) => a.id === Number(btn.dataset.editAd));
           if (!ad) return;
+          adFormTitle.textContent = '✏️ Editar anuncio';
           adIdInput.value = ad.id;
           adTitleInput.value = ad.title || '';
           adDescInput.value = ad.description || '';
@@ -235,12 +520,14 @@
           await fetch(`/api/admin/ads/${btn.dataset.deleteAd}?token=${encodeURIComponent(token)}`, {
             method: 'DELETE',
           });
-          loadAds();
+          await loadAds();
+          renderDashboard();
         });
       });
     }
 
     function resetAdForm() {
+      adFormTitle.textContent = '➕ Nuevo anuncio';
       adIdInput.value = '';
       adTitleInput.value = '';
       adDescInput.value = '';
@@ -283,7 +570,8 @@
 
       if (res.ok) {
         resetAdForm();
-        loadAds();
+        await loadAds();
+        renderDashboard();
       } else {
         adStatus.hidden = false;
         adStatus.textContent = 'No se pudo guardar el anuncio.';
@@ -292,41 +580,35 @@
 
     cancelAdBtn.addEventListener('click', resetAdForm);
 
-    
+    // ============ Dashboard ============
+    function renderDashboard() {
+      statDevices.textContent = currentDevices.length;
+      statRequests.textContent = currentDevices.reduce((sum, d) => sum + d.count, 0);
+      statAds.textContent = currentAds.filter((a) => a.isActive).length;
 
-    loadBtn.addEventListener('click', loadSummary);
+      const recientes = [...currentDevices]
+        .filter((d) => d.lastRequestAt)
+        .sort((a, b) => new Date(b.lastRequestAt) - new Date(a.lastRequestAt))
+        .slice(0, 8);
 
-    resetAllBtn.addEventListener('click', async () => {
-      await fetch('/api/admin/reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: getToken() }),
-      });
-      loadSummary();
-    });
+      if (!recientes.length) {
+        dashRecentBody.innerHTML = '<tr><td colspan="3" class="empty-state">Todavia no hay pedidos hoy.</td></tr>';
+      } else {
+        dashRecentBody.innerHTML = recientes
+          .map(
+            (d) => `
+          <tr>
+            <td>${d.nickname ? escapeHtml(d.nickname) : '<em>(sin nombre)</em>'}</td>
+            <td>${d.count}</td>
+            <td>${new Date(d.lastRequestAt).toLocaleTimeString()}</td>
+          </tr>
+        `
+          )
+          .join('');
+      }
+    }
 
-
-    const wipeAllBtn = document.getElementById('wipeAllBtn');
-
-    wipeAllBtn.addEventListener('click', async () => {
-      const sure = confirm(
-        'Esto borra TODO: nombres, pedidos, creditos e Instagram de todos los clientes de hoy.\n\n' +
-        'Usalo solo al cerrar el bar. ¿Continuar?'
-      );
-      if (!sure) return;
-
-      const reallySure = confirm('Ultima confirmacion: esta accion no se puede deshacer. ¿Borrar todo?');
-      if (!reallySure) return;
-
-      await fetch('/api/admin/wipe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: getToken() }),
-      });
-      loadSummary();
-    });
-
-
+    // ============ Arranque ============
     const savedToken = localStorage.getItem('jukebox_admin_token');
     if (savedToken) {
       tokenInput.value = savedToken;
