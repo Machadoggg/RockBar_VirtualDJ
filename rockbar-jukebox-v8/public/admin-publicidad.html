@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🛠️ Publicidad — Bar-racuda</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Anton&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 (gratis) para iconos más nítidos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0b0a0c;
+            color: #ede6da;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            padding: 30px 16px 70px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .wrap {
+            max-width: 720px;
+            width: 100%;
+        }
+
+        /* Encabezado mejorado */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+        }
+
+            .header h1 {
+                font-family: 'Anton', sans-serif;
+                font-size: 2rem;
+                letter-spacing: 0.03em;
+                text-transform: uppercase;
+                background: linear-gradient(135deg, #e8b23d, #c81e3a);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                margin: 0;
+            }
+
+            .header .sub {
+                color: #9a8d83;
+                font-size: 0.9rem;
+                background: rgba(255,255,255,0.04);
+                padding: 4px 12px;
+                border-radius: 20px;
+                border: 1px solid #332821;
+                white-space: nowrap;
+            }
+
+        /* Tarjetas con vidrio y más profundidad */
+        .card {
+            background: rgba(22, 17, 16, 0.75);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid #332821;
+            border-radius: 16px;
+            padding: 22px 20px;
+            margin-bottom: 22px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+            transition: border 0.2s;
+        }
+
+            .card:hover {
+                border-color: #e8b23d44;
+            }
+
+            .card h2 {
+                font-family: 'Anton', sans-serif;
+                font-size: 1.1rem;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                color: #e8b23d;
+                margin-bottom: 16px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+                .card h2 i {
+                    color: #c81e3a;
+                    font-size: 1.2rem;
+                }
+
+        label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #9a8d83;
+            margin-bottom: 5px;
+        }
+
+        input, textarea {
+            width: 100%;
+            background: #0b0a0c;
+            border: 1.5px solid #332821;
+            border-radius: 10px;
+            padding: 11px 14px;
+            color: #ede6da;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.92rem;
+            outline: none;
+            transition: 0.2s;
+            margin-bottom: 14px;
+        }
+
+            input:focus, textarea:focus {
+                border-color: #e8b23d;
+                box-shadow: 0 0 0 3px #e8b23d22;
+            }
+
+            input::placeholder, textarea::placeholder {
+                color: #6b5f54;
+            }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            background: #161110;
+            padding: 8px 14px;
+            border-radius: 30px;
+            border: 1px solid #332821;
+        }
+
+            .checkbox-row input {
+                width: auto;
+                margin: 0;
+                accent-color: #e8b23d;
+                transform: scale(1.15);
+            }
+
+            .checkbox-row label {
+                margin: 0;
+                color: #ede6da;
+                font-size: 0.8rem;
+                font-weight: 500;
+                text-transform: none;
+            }
+
+        /* Botones modernos */
+        button {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            border: none;
+            border-radius: 30px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #c81e3a, #7d1326);
+            color: #fff;
+            box-shadow: 0 6px 14px rgba(200, 30, 58, 0.3);
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(200, 30, 58, 0.4);
+            }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1.5px solid #a87f2c;
+            color: #e8b23d;
+        }
+
+            .btn-secondary:hover {
+                background: #e8b23d15;
+                border-color: #e8b23d;
+            }
+
+        .btn-danger {
+            background: transparent;
+            border: 1.5px solid #c81e3a;
+            color: #c81e3a;
+            padding: 6px 14px;
+            font-size: 0.75rem;
+            border-radius: 20px;
+        }
+
+            .btn-danger:hover {
+                background: #c81e3a20;
+            }
+
+        .btn-edit {
+            background: transparent;
+            border: 1.5px solid #9a8d83;
+            color: #ede6da;
+            padding: 6px 14px;
+            font-size: 0.75rem;
+            border-radius: 20px;
+        }
+
+            .btn-edit:hover {
+                background: #9a8d8320;
+            }
+
+        .btn-upload {
+            background: #2c241f;
+            border: 1px dashed #e8b23d;
+            color: #e8b23d;
+            padding: 10px 16px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+
+            .btn-upload:hover {
+                background: #e8b23d15;
+                border-style: solid;
+            }
+
+        /* Lista de anuncios */
+        .ad-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            border: 1px solid #332821;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            background: #0b0a0c;
+            transition: 0.2s;
+        }
+
+            .ad-item:hover {
+                border-color: #e8b23d55;
+            }
+
+            .ad-item.inactive {
+                opacity: 0.45;
+                filter: grayscale(0.6);
+            }
+
+        .ad-info {
+            flex: 1;
+        }
+
+            .ad-info strong {
+                font-size: 1rem;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                color: #ede6da;
+            }
+
+            .ad-info .badge {
+                background: #c81e3a;
+                color: #fff;
+                font-size: 0.6rem;
+                font-weight: 700;
+                padding: 2px 10px;
+                border-radius: 30px;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+            }
+
+            .ad-info span {
+                color: #9a8d83;
+                font-size: 0.8rem;
+                display: block;
+                margin-top: 2px;
+            }
+
+        .ad-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .empty {
+            color: #6b5f54;
+            text-align: center;
+            padding: 18px 0;
+            font-size: 0.9rem;
+        }
+
+        .status {
+            font-size: 0.78rem;
+            margin-top: 10px;
+            padding: 6px 12px;
+            border-radius: 30px;
+            background: #161110;
+        }
+
+            .status.ok {
+                color: #4c8c5a;
+                border-left: 3px solid #4c8c5a;
+            }
+
+            .status.err {
+                color: #c81e3a;
+                border-left: 3px solid #c81e3a;
+            }
+
+        /* QR */
+        .qr-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+            .qr-box img {
+                border-radius: 16px;
+                background: #fff;
+                padding: 12px;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+                max-width: 220px;
+                height: auto;
+            }
+
+            .qr-box a.dl {
+                color: #e8b23d;
+                font-size: 0.85rem;
+                font-weight: 500;
+                text-decoration: none;
+                border-bottom: 1.5px solid #e8b23d55;
+                padding-bottom: 2px;
+                transition: 0.2s;
+            }
+
+                .qr-box a.dl:hover {
+                    border-bottom-color: #e8b23d;
+                }
+
+        .file-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+            .file-input-wrapper input[type="file"] {
+                display: none;
+            }
+
+            .file-input-wrapper .file-label {
+                background: #1f1714;
+                padding: 8px 16px;
+                border-radius: 30px;
+                border: 1px solid #332821;
+                color: #ede6da;
+                font-size: 0.8rem;
+                cursor: pointer;
+                transition: 0.2s;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+                .file-input-wrapper .file-label:hover {
+                    border-color: #e8b23d;
+                    background: #2c241f;
+                }
+
+            .file-input-wrapper .file-name {
+                color: #9a8d83;
+                font-size: 0.8rem;
+                flex: 1;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+        .inline-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        @media (max-width: 500px) {
+            .row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+                .header .sub {
+                    white-space: normal;
+                }
+
+            .ad-item {
+                flex-wrap: wrap;
+            }
+
+            .ad-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
+
+        .lock-screen {
+            position: fixed;
+            inset: 0;
+            background: #0b0a0c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            padding: 20px;
+        }
+
+        .lock-card {
+            background: rgba(22, 17, 16, 0.9);
+            border: 1px solid #332821;
+            border-radius: 16px;
+            padding: 32px 28px;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+        }
+
+        .lock-card h1 {
+            font-family: 'Anton', sans-serif;
+            font-size: 1.4rem;
+            color: #ede6da;
+            margin-bottom: 6px;
+        }
+
+        .lock-sub {
+            color: #9a8d83;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .lock-card input {
+            margin-bottom: 16px;
+        }
+
+    </style>
+</head>
+<body>
+
+        <!-- Pantalla de bloqueo -->
+        <div id="lockScreen" class="lock-screen">
+            <div class="lock-card">
+                <h1><i class="fas fa-lock" style="color:#c81e3a;"></i> Acceso restringido</h1>
+                <p class="lock-sub">Panel de administración — Bar-racuda</p>
+                <input id="lockPassword" type="password" placeholder="Contraseña" autocomplete="off" />
+                <button class="btn-primary" style="width:100%; justify-content:center;" onclick="tryUnlock()">
+                    <i class="fas fa-key"></i> Entrar
+                </button>
+                <p class="status err" id="lockStatus" style="display:none;">Contraseña incorrecta.</p>
+            </div>
+        </div>
+    
+        <!-- Contenido real del panel (oculto hasta desbloquear) -->
+        <div id="adminContent" hidden>
+            <div class="wrap">
+                <!-- encabezado mejorado -->
+                <div class="header">
+                    <h1><i class="fas fa-bullhorn" style="color:#c81e3a; -webkit-text-fill-color:#c81e3a; margin-right:6px;"></i>Publicidad</h1>
+                    <span class="sub"><i class="fas fa-wifi"></i> Bar-racuda · panel</span>
+                </div>
+        
+                <!-- conexión -->
+                <div class="card">
+                    <h2><i class="fas fa-plug"></i> Conexión</h2>
+                    <label for="apiBase">URL de la API (.NET)</label>
+                    <input id="apiBase" placeholder="http://192.168.1.59:60061" />
+                    <label for="adminKey">Clave de administrador</label>
+                    <input id="adminKey" type="password" placeholder="La misma que pusiste en appsettings.json (AdminKey)" />
+                    <button class="btn-secondary" onclick="connect()"><i class="fas fa-link"></i> Conectar</button>
+                    <p class="status" id="connStatus"></p>
+                </div>
+        
+                <!-- anuncios -->
+                <div class="card" id="adsCard" style="display:none">
+                    <h2><i class="fas fa-list"></i> Anuncios activos</h2>
+                    <div id="adsList"><p class="empty">Cargando…</p></div>
+                </div>
+        
+                <!-- formulario -->
+                <div class="card" id="formCard" style="display:none">
+                    <h2 id="formTitle"><i class="fas fa-pen-fancy"></i> Nuevo anuncio</h2>
+                    <input type="hidden" id="adId" />
+                    <label for="adTitle">Título *</label>
+                    <input id="adTitle" placeholder="Ej: Cerveza Stout Imperial" />
+        
+                    <label for="adDesc">Descripción</label>
+                    <textarea id="adDesc" placeholder="Ej: Trago intenso, tueste oscuro."></textarea>
+        
+                    <div class="row">
+                        <div>
+                            <label for="adImage">URL de imagen (o súbela abajo)</label>
+                            <input id="adImage" placeholder="https://..." />
+                        </div>
+                        <div>
+                            <label for="adEmoji">Emoji si no hay imagen</label>
+                            <input id="adEmoji" placeholder="🍺" maxlength="4" />
+                        </div>
+                    </div>
+        
+                    <!-- Subida de imagen desde PC -->
+                    <div class="file-input-wrapper">
+                        <span class="file-label" for="imageUpload" onclick="document.getElementById('imageUpload').click()">
+                            <i class="fas fa-upload"></i> Subir imagen
+                        </span>
+                        <input type="file" id="imageUpload" accept="image/png, image/jpeg, image/webp, image/gif" />
+                        <span class="file-name" id="fileName">Ningún archivo seleccionado</span>
+                        <button class="btn-edit" style="padding:4px 12px; font-size:0.7rem;" onclick="clearFile()">Limpiar</button>
+                    </div>
+        
+                    <div class="row">
+                        <div>
+                            <label for="adBadge">Etiqueta</label>
+                            <input id="adBadge" placeholder="★ Premium / 2x1 / Nuevo" />
+                        </div>
+                        <div>
+                            <label for="adOrder">Orden</label>
+                            <input id="adOrder" type="number" value="0" />
+                        </div>
+                    </div>
+        
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="adActive" checked />
+                        <label for="adActive">Mostrar a los clientes (activo)</label>
+                    </div>
+        
+                    <div class="inline-actions">
+                        <button class="btn-primary" onclick="saveAd()"><i class="fas fa-save"></i> Guardar anuncio</button>
+                        <button class="btn-secondary" onclick="resetForm()"><i class="fas fa-times"></i> Cancelar</button>
+                    </div>
+                    <p class="status" id="formStatus"></p>
+                </div>
+        
+                <!-- QR -->
+                <div class="card">
+                    <h2><i class="fas fa-qrcode"></i> QR para las mesas</h2>
+                    <label for="pageUrl">URL de la página de clientes</label>
+                    <input id="pageUrl" placeholder="http://192.168.1.59:60061/cliente-pedidos.html" />
+                    <button class="btn-secondary" onclick="generateQr()"><i class="fas fa-sync-alt"></i> Generar QR</button>
+                    <div class="qr-box" id="qrBox" style="margin-top:14px"></div>
+                </div>
+            </div>
+        </div>
+        
+
+    <script>
+        let API_BASE = '';
+        let ADMIN_KEY = '';
+        let currentAds = [];
+        let selectedFile = null; // para la imagen subida
+    
+        // ── Bloqueo de acceso (deterrente client-side, NO reemplaza la AdminKey) ──
+        // Cualquiera que abra "Ver código fuente" puede leer esta contraseña.
+        // Es solo un filtro contra curiosos, no seguridad real.
+        const PASSWORD = '123456';
+        const SESSION_KEY = 'br_admin_unlocked';
+
+        function unlock() {
+            document.getElementById('lockScreen').style.display = 'none';
+            document.getElementById('adminContent').hidden = false;
+        }
+
+        function tryUnlock() {
+            const input = document.getElementById('lockPassword').value;
+            if (input === PASSWORD) {
+                sessionStorage.setItem(SESSION_KEY, '1');
+                unlock();
+            } else {
+                document.getElementById('lockStatus').style.display = 'block';
+                document.getElementById('lockPassword').value = '';
+                document.getElementById('lockPassword').focus();
+            }
+        }
+
+        document.getElementById('lockPassword').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') tryUnlock();
+        });
+
+        // Si ya se desbloqueó en esta pestaña/sesión, saltar la pantalla.
+        if (sessionStorage.getItem(SESSION_KEY) === '1') {
+            unlock();
+        }
+
+
+
+
+        // precarga
+        document.getElementById('apiBase').value = window.location.origin;
+        document.getElementById('pageUrl').value = window.location.origin + '/cliente-pedidos.html';
+
+        // --- manejo de archivo ---
+        document.getElementById('imageUpload').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) {
+                selectedFile = null;
+                document.getElementById('fileName').textContent = 'Ningún archivo seleccionado';
+                return;
+            }
+            // validar tipo
+            if (!file.type.startsWith('image/')) {
+                alert('Solo se permiten archivos de imagen.');
+                this.value = '';
+                selectedFile = null;
+                document.getElementById('fileName').textContent = 'Ningún archivo seleccionado';
+                return;
+            }
+            // tamaño máximo 2MB
+            if (file.size > 2 * 1024 * 1024) {
+                alert('La imagen no debe superar los 2MB.');
+                this.value = '';
+                selectedFile = null;
+                document.getElementById('fileName').textContent = 'Ningún archivo seleccionado';
+                return;
+            }
+            selectedFile = file;
+            document.getElementById('fileName').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+            // opcional: previsualización en el campo URL (como data URL)
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                document.getElementById('adImage').value = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function clearFile() {
+            selectedFile = null;
+            document.getElementById('imageUpload').value = '';
+            document.getElementById('fileName').textContent = 'Ningún archivo seleccionado';
+            document.getElementById('adImage').value = '';
+        }
+
+        // --- funciones principales ---
+        function connect() {
+            API_BASE = document.getElementById('apiBase').value.trim().replace(/\/$/, '');
+            ADMIN_KEY = document.getElementById('adminKey').value.trim();
+            if (!API_BASE || !ADMIN_KEY) {
+                setStatus('connStatus', 'Completa la URL y la clave.', false);
+                return;
+            }
+            loadAds();
+        }
+
+        async function loadAds() {
+            document.getElementById('adsCard').style.display = 'block';
+            document.getElementById('formCard').style.display = 'block';
+            const list = document.getElementById('adsList');
+            list.innerHTML = '<p class="empty"><i class="fas fa-spinner fa-spin"></i> Cargando…</p>';
+            try {
+                const res = await fetch(`${API_BASE}/api/Advertisement`, { headers: { 'X-Admin-Key': ADMIN_KEY } });
+                if (!res.ok) throw new Error(res.status);
+                currentAds = await res.json();
+                renderAds();
+                setStatus('connStatus', 'Conectado correctamente.', true);
+            } catch (e) {
+                list.innerHTML = '<p class="empty"><i class="fas fa-exclamation-triangle"></i> No se pudo cargar. Revisa URL y clave.</p>';
+                setStatus('connStatus', 'No se pudo conectar (revisa URL/clave).', false);
+            }
+        }
+
+        function renderAds() {
+            const list = document.getElementById('adsList');
+            if (!currentAds.length) {
+                list.innerHTML = '<p class="empty"><i class="fas fa-plus-circle"></i> Aún no hay anuncios — agrega el primero abajo.</p>';
+                return;
+            }
+            list.innerHTML = currentAds.map(ad => `
+          <div class="ad-item ${ad.isActive ? '' : 'inactive'}">
+            <div class="ad-info">
+              <strong>${esc(ad.emoji || '🍺')} ${esc(ad.title)} ${ad.badge ? `<span class="badge">${esc(ad.badge)}</span>` : ''}</strong>
+              <span>${esc(ad.description || '')}</span>
+              <span><i class="far fa-circle" style="color:${ad.isActive ? '#4c8c5a' : '#6b5f54'}; font-size:0.6rem;"></i> ${ad.isActive ? 'Activo' : 'Oculto'} · orden ${ad.displayOrder}</span>
+            </div>
+            <div class="ad-actions">
+              <button class="btn-edit" onclick="editAd(${ad.id})"><i class="fas fa-edit"></i> Editar</button>
+              <button class="btn-danger" onclick="deleteAd(${ad.id})"><i class="fas fa-trash-alt"></i></button>
+            </div>
+          </div>
+        `).join('');
+        }
+
+        function editAd(id) {
+            const ad = currentAds.find(a => a.id === id);
+            if (!ad) return;
+            document.getElementById('formTitle').innerHTML = '<i class="fas fa-edit"></i> Editar anuncio';
+            document.getElementById('adId').value = ad.id;
+            document.getElementById('adTitle').value = ad.title || '';
+            document.getElementById('adDesc').value = ad.description || '';
+            document.getElementById('adImage').value = ad.imageUrl || '';
+            document.getElementById('adEmoji').value = ad.emoji || '';
+            document.getElementById('adBadge').value = ad.badge || '';
+            document.getElementById('adOrder').value = ad.displayOrder || 0;
+            document.getElementById('adActive').checked = !!ad.isActive;
+            // limpiar selección de archivo
+            clearFile();
+            window.scrollTo({ top: document.getElementById('formCard').offsetTop - 20, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('formTitle').innerHTML = '<i class="fas fa-pen-fancy"></i> Nuevo anuncio';
+            ['adId', 'adTitle', 'adDesc', 'adImage', 'adEmoji', 'adBadge'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('adOrder').value = 0;
+            document.getElementById('adActive').checked = true;
+            clearFile();
+            setStatus('formStatus', '', null);
+        }
+
+        async function saveAd() {
+            const title = document.getElementById('adTitle').value.trim();
+            if (!title) { setStatus('formStatus', 'El título es obligatorio.', false); return; }
+            const id = document.getElementById('adId').value;
+            const payload = {
+                title,
+                description: document.getElementById('adDesc').value.trim() || null,
+                imageUrl: document.getElementById('adImage').value.trim() || null,
+                emoji: document.getElementById('adEmoji').value.trim() || null,
+                badge: document.getElementById('adBadge').value.trim() || null,
+                displayOrder: parseInt(document.getElementById('adOrder').value || '0', 10),
+                isActive: document.getElementById('adActive').checked
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/api/Advertisement${id ? '/' + id : ''}`, {
+                    method: id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_KEY },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error(res.status);
+                setStatus('formStatus', 'Guardado correctamente.', true);
+                resetForm();
+                loadAds();
+            } catch (e) {
+                setStatus('formStatus', 'No se pudo guardar (revisa la clave de administrador).', false);
+            }
+        }
+
+        async function deleteAd(id) {
+            if (!confirm('¿Eliminar este anuncio?')) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/Advertisement/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-Admin-Key': ADMIN_KEY }
+                });
+                if (!res.ok) throw new Error(res.status);
+                loadAds();
+            } catch (e) {
+                alert('No se pudo eliminar.');
+            }
+        }
+
+        function generateQr() {
+            const url = document.getElementById('pageUrl').value.trim();
+            const box = document.getElementById('qrBox');
+            if (!url) { box.innerHTML = '<p class="empty">Escribe la URL primero.</p>'; return; }
+            const encoded = encodeURIComponent(url);
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encoded}`;
+            box.innerHTML = `<img src="${qrUrl}" width="220" height="220" alt="Código QR" />
+          <a class="dl" href="${qrUrl}" download="qr-mesa.png" target="_blank" rel="noopener"><i class="fas fa-download"></i> Descargar QR para imprimir</a>`;
+        }
+
+        function setStatus(elId, msg, ok) {
+            const el = document.getElementById(elId);
+            el.textContent = msg;
+            el.className = 'status' + (ok === true ? ' ok' : ok === false ? ' err' : '');
+        }
+        function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    </script>
+</body>
+</html>

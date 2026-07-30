@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Beer Jump 🍺 — Bar-Racuda</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            background: radial-gradient(ellipse at center,#1a0600 0%,#050100 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: Georgia,'Times New Roman',serif;
+        }
+
+        #wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 4px 4px 2px;
+        }
+
+        canvas {
+            display: block;
+            border-radius: 10px;
+            flex: 0 1 auto;
+            box-shadow: 0 0 40px rgba(226,75,74,.35),0 0 80px rgba(201,168,76,.18),0 0 140px rgba(139,69,19,.18);
+            width: 100%;
+            aspect-ratio: 800/430;
+            height: auto;
+            max-height: calc(100vh - 26px);
+            cursor: pointer;
+        }
+
+        #hint {
+            flex-shrink: 0;
+            color: rgba(201,168,76,.65);
+            font-size: 9px;
+            margin-top: 3px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="wrap">
+        <canvas id="c" width="800" height="430"></canvas>
+        <div id="hint">🤘 Espacio · Clic · Tap para saltar &nbsp;|&nbsp; Doble salto disponible 🤘</div>
+    </div>
+    <script>
+        const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+        const W = 800, H = 430, GY = 340;
+        const BR = { dark: '#0D0D14', red: '#E24B4A', gold: '#C9A84C' };
+
+        /* ── Logo ─────────────────────────────────────────────────────────────── */
+        const logoImg = new Image();
+        logoImg.src = 'data:image/jpeg;base64,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';
+
+        /* ── Helpers ──────────────────────────────────────────────────────────── */
+        function rrect(x, y, w, h, r) {
+            if (typeof r === 'number') r = [r, r, r, r];
+            const [tl, tr, br, bl] = r;
+            ctx.beginPath();
+            ctx.moveTo(x + tl, y); ctx.lineTo(x + w - tr, y); ctx.arcTo(x + w, y, x + w, y + tr, tr);
+            ctx.lineTo(x + w, y + h - br); ctx.arcTo(x + w, y + h, x + w - br, y + h, br);
+            ctx.lineTo(x + bl, y + h); ctx.arcTo(x, y + h, x, y + h - bl, bl);
+            ctx.lineTo(x, y + tl); ctx.arcTo(x, y, x + tl, y, tl); ctx.closePath();
+        }
+
+        /* ── Audio ────────────────────────────────────────────────────────────── */
+        let ac;
+        function audio() { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); return ac; }
+        function beep(f, d, t = 'sine', v = .12, r) {
+            try {
+                const a = audio(), o = a.createOscillator(), g = a.createGain();
+                o.connect(g); g.connect(a.destination); o.type = t; o.frequency.setValueAtTime(f, a.currentTime);
+                if (r) o.frequency.exponentialRampToValueAtTime(r, a.currentTime + d);
+                g.gain.setValueAtTime(v, a.currentTime); g.gain.exponentialRampToValueAtTime(.001, a.currentTime + d);
+                o.start(); o.stop(a.currentTime + d);
+            } catch (e) { }
+        }
+        function playJump() { beep(280, .13, 'sine', .1, 580); }
+        function playHit() { beep(180, .22, 'sawtooth', .15, 70); }
+        function playWin() { [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => beep(f, .22, 'sine', .15), i * 80)); }
+        function playLevelUp() { [440, 554, 659, 880].forEach((f, i) => setTimeout(() => beep(f, .2, 'triangle', .14), i * 90)); }
+        function playLose() { beep(350, .5, 'sawtooth', .18, 90); }
+        function playUnlock() { beep(660, .1, 'sine', .08, 880); setTimeout(() => beep(880, .15, 'sine', .1, 1100), 100); }
+
+        /* ── Levels ────────────────────────────────────────────────────────────── */
+        const LEVELS = [
+            { speed: 3, interval: 130, types: ['bottle', 'bottle', 'barrel', 'amp'], fillRate: .00042, label: 'Calentando Motores' },
+            { speed: 4.2, interval: 110, types: ['bottle', 'barrel', 'double', 'amp', 'guitar_obs'], fillRate: .00048, label: 'El Bar Se Anima' },
+            { speed: 5.2, interval: 90, types: ['bottle', 'barrel', 'double', 'tall', 'amp', 'speaker'], fillRate: .00055, label: 'Noche de Viernes' },
+            { speed: 6.5, interval: 74, types: ['bottle', 'barrel', 'double', 'tall', 'doublebarrel', 'amp', 'amp_guitar'], fillRate: .00060, label: 'Happy Hour 🤘' },
+            { speed: 8.5, interval: 58, types: ['bottle', 'barrel', 'double', 'tall', 'doublebarrel', 'trio', 'amp', 'speaker'], fillRate: .00066, label: '¡MODO ROCKERO!' },
+        ];
+
+        /* ════════════════════════════════════════════════════════════════════════
+           ALBUM POSTER REVEAL SYSTEM — 2 per level (50 % & end)
+           ════════════════════════════════════════════════════════════════════════ */
+        const ALBUM_SIZE = 66;
+
+        /* 10 fixed screen positions (5 levels × 2 reveals) */
+        const ALBUM_POS = [
+            /* lv 1  mid & end */
+            { x: 8, y: 64, tilt: -6 },
+            { x: 8, y: 158, tilt: 5 },
+            /* lv 2 */
+            { x: 726, y: 64, tilt: 6 },
+            { x: 726, y: 158, tilt: -5 },
+            /* lv 3 */
+            { x: 210, y: 64, tilt: -4 },
+            { x: 350, y: 64, tilt: 5 },
+            /* lv 4 */
+            { x: 490, y: 64, tilt: -3 },
+            { x: 630, y: 64, tilt: 4 },
+            /* lv 5 */
+            { x: 210, y: 158, tilt: -5 },
+            { x: 490, y: 158, tilt: 5 },
+        ];
+
+        const ALBUMS = [
+            { band: 'AC/DC', title: 'Back in Black' },
+            { band: 'Metallica', title: 'Master of Puppets' },
+            { band: 'Megadeth', title: 'Peace Sells…' },
+            { band: 'Slayer', title: 'Reign in Blood' },
+            { band: 'Iron Maiden', title: 'Nº of the Beast' },
+            { band: "Guns N' Roses", title: 'Appetite for Destruction' },
+            { band: 'Black Sabbath', title: 'Paranoid' },
+            { band: 'Nirvana', title: 'Nevermind' },
+            { band: 'Led Zeppelin', title: 'Zeppelin IV' },
+            { band: 'Pink Floyd', title: 'Dark Side of the Moon' },
+        ];
+
+        let revealedAlbums = [], nextAlbum = 0;
+        let banners = [];
+
+        function triggerAlbumReveal(idx) {
+            if (idx >= ALBUM_POS.length) return;
+            const pos = ALBUM_POS[idx];
+            revealedAlbums.push({ idx, animY: pos.y - 100, phase: 'falling', af: 0 });
+            banners.push({ text: ALBUMS[idx].band, sub: ALBUMS[idx].title, life: 200 });
+            playUnlock();
+            addFloat(pos.x + ALBUM_SIZE / 2, 260, '🎸 +POSTER', BR.gold);
+        }
+
+        function checkAlbumUnlocks() {
+            if (state !== 'PLAYING') return;
+            const milestones = [.50, .96];
+            milestones.forEach((m, mi) => {
+                const expected = (level - 1) * 2 + mi + 1;
+                if (fillLevel >= m && nextAlbum < expected && nextAlbum < ALBUMS.length) {
+                    nextAlbum++;
+                    triggerAlbumReveal(nextAlbum - 1);
+                }
+            });
+        }
+
+        function updateRevealedAlbums() {
+            revealedAlbums.forEach(ra => {
+                const pos = ALBUM_POS[ra.idx];
+                ra.af++;
+                if (ra.phase === 'falling') {
+                    ra.animY += (pos.y - ra.animY) * .13;
+                    if (Math.abs(pos.y - ra.animY) < 1.2) { ra.animY = pos.y; ra.phase = 'wobbling'; ra.af = 0; }
+                } else if (ra.phase === 'wobbling' && ra.af > 55) ra.phase = 'done';
+            });
+            for (let i = banners.length - 1; i >= 0; i--) { banners[i].life--; if (banners[i].life <= 0) banners.splice(i, 1); }
+        }
+
+        /* ── Album art drawings ──────────────────────────────────────────────── */
+        function drawAlbumArt(idx, x, y, s) {
+            ctx.save(); ctx.beginPath(); ctx.rect(x, y, s, s); ctx.clip();
+            switch (idx % 10) {
+                case 0: { /* AC/DC Back in Black */
+                    ctx.fillStyle = '#000'; ctx.fillRect(x, y, s, s);
+                    ctx.strokeStyle = 'rgba(20,20,20,1)'; ctx.lineWidth = .45;
+                    for (let i = 0; i < s; i += s / 9) { ctx.beginPath(); ctx.moveTo(x + i, y); ctx.lineTo(x + i, y + s); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y + i); ctx.lineTo(x + s, y + i); ctx.stroke(); }
+                    ctx.textAlign = 'center'; ctx.font = `bold ${Math.round(s * .2)}px Impact,Arial Black`;
+                    ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(255,255,255,.3)'; ctx.shadowBlur = 4;
+                    ctx.fillText('AC⚡DC', x + s / 2, y + s * .4); ctx.shadowBlur = 0;
+                    ctx.font = `bold ${Math.round(s * .13)}px Impact,Arial`; ctx.fillStyle = 'rgba(240,240,240,.92)';
+                    ctx.fillText('BACK IN', x + s / 2, y + s * .6); ctx.fillText('BLACK', x + s / 2, y + s * .77); break;
+                }
+                case 1: { /* Metallica — Master of Puppets */
+                    const sky = ctx.createLinearGradient(x, y, x, y + s * .55);
+                    sky.addColorStop(0, '#080808'); sky.addColorStop(.6, '#1a0400'); sky.addColorStop(1, '#3a1000');
+                    ctx.fillStyle = sky; ctx.fillRect(x, y, s, s * .55);
+                    const fire = ctx.createLinearGradient(x, y + s * .48, x, y + s * .72);
+                    fire.addColorStop(0, '#ff4400'); fire.addColorStop(1, '#220000');
+                    ctx.fillStyle = fire; ctx.fillRect(x, y + s * .48, s, s * .24);
+                    const grd = ctx.createLinearGradient(x, y + s * .66, x, y + s);
+                    grd.addColorStop(0, '#183000'); grd.addColorStop(1, '#081800');
+                    ctx.fillStyle = grd; ctx.fillRect(x, y + s * .66, s, s * .34);
+                    ctx.fillStyle = 'rgba(232,232,232,.94)';
+                    [[.17, .82], [.38, .77], [.62, .80], [.83, .74]].forEach(([cx, cy]) => {
+                        ctx.fillRect(x + s * cx - s * .013, y + s * (cy - .22), s * .026, s * .24);
+                        ctx.fillRect(x + s * cx - s * .055, y + s * (cy - .13), s * .11, s * .026);
+                    });
+                    ctx.font = `bold ${Math.round(s * .11)}px Impact,Arial`; ctx.textAlign = 'center';
+                    ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 3;
+                    ctx.fillText('METALLICA', x + s / 2, y + s * .22); ctx.shadowBlur = 0; break;
+                }
+                case 2: { /* Megadeth — Peace Sells */
+                    const mg = ctx.createLinearGradient(x, y, x, y + s);
+                    mg.addColorStop(0, '#0a0e18'); mg.addColorStop(.5, '#141e30'); mg.addColorStop(1, '#080c14');
+                    ctx.fillStyle = mg; ctx.fillRect(x, y, s, s);
+                    ctx.fillStyle = 'rgba(8,12,20,.9)';
+                    [[.05, .85, .15, .4], [.18, .85, .12, .55], [.28, .85, .2, .38], [.46, .85, .08, .6], [.52, .85, .18, .42], [.68, .85, .1, .52], [.76, .85, .22, .35]].forEach(([bx, by, bw, bh]) => { ctx.fillRect(x + s * bx, y + s * bh, s * bw, s * (by - bh)); });
+                    ctx.fillStyle = 'rgba(200,200,200,.82)'; ctx.beginPath(); ctx.arc(x + s * .5, y + s * .34, s * .14, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = 'rgba(20,30,50,.9)'; ctx.fillRect(x + s * .38, y + s * .3, s * .24, s * .08);
+                    ctx.fillStyle = 'rgba(255,50,0,.9)'; ctx.beginPath(); ctx.arc(x + s * .44, y + s * .34, s * .03, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(x + s * .56, y + s * .34, s * .03, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = 'rgba(80,90,110,.85)'; ctx.beginPath(); ctx.arc(x + s * .5, y + s * .3, s * .145, Math.PI, 0); ctx.fill(); ctx.fillRect(x + s * .36, y + s * .3, s * .28, s * .04);
+                    ctx.strokeStyle = 'rgba(255,180,0,.7)'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.arc(x + s * .5, y + s * .72, s * .1, 0, Math.PI * 2); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(x + s * .5, y + s * .62); ctx.lineTo(x + s * .5, y + s * .82); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(x + s * .5, y + s * .72); ctx.lineTo(x + s * .43, y + s * .79); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(x + s * .5, y + s * .72); ctx.lineTo(x + s * .57, y + s * .79); ctx.stroke();
+                    ctx.font = `bold ${Math.round(s * .1)}px Impact,Arial`; ctx.textAlign = 'center';
+                    ctx.fillStyle = 'rgba(255,180,0,.9)'; ctx.shadowColor = '#ff8800'; ctx.shadowBlur = 5;
+                    ctx.fillText('MEGADETH', x + s / 2, y + s * .19); ctx.shadowBlur = 0; break;
+                }
+                case 3: { /* Slayer — Reign in Blood */
+                    const slg = ctx.createLinearGradient(x, y, x, y + s);
+                    slg.addColorStop(0, '#3a0000'); slg.addColorStop(.3, '#8b0000'); slg.addColorStop(.7, '#c40000'); slg.addColorStop(1, '#3a0000');
+                    ctx.fillStyle = slg; ctx.fillRect(x, y, s, s);
+                    ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1;
+                    for (let i = 0; i < 12; i++) { ctx.beginPath(); ctx.moveTo(x + Math.random() * s, y); ctx.lineTo(x + Math.random() * s, y + s); ctx.stroke(); }
+                    ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 1.5;
+                    const pc = x + s * .5, py_ = y + s * .5, pr = s * .32;
+                    for (let i = 0; i < 5; i++) { const a1 = i * Math.PI * 2 / 5 - Math.PI / 2, a2 = ((i + 2) % 5) * Math.PI * 2 / 5 - Math.PI / 2; ctx.beginPath(); ctx.moveTo(pc + Math.cos(a1) * pr, py_ + Math.sin(a1) * pr); ctx.lineTo(pc + Math.cos(a2) * pr, py_ + Math.sin(a2) * pr); ctx.stroke(); }
+                    ctx.fillStyle = 'rgba(0,0,0,.52)';
+                    ctx.beginPath(); ctx.moveTo(x + s * .5, y + s * .35); ctx.quadraticCurveTo(x + s * .15, y + s * .2, x + s * .02, y + s * .42); ctx.quadraticCurveTo(x + s * .28, y + s * .48, x + s * .5, y + s * .55); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(x + s * .5, y + s * .35); ctx.quadraticCurveTo(x + s * .85, y + s * .2, x + s * .98, y + s * .42); ctx.quadraticCurveTo(x + s * .72, y + s * .48, x + s * .5, y + s * .55); ctx.fill();
+                    ctx.font = `bold ${Math.round(s * .22)}px Impact,Arial Black`; ctx.textAlign = 'center';
+                    ctx.fillStyle = 'rgba(0,0,0,.9)'; ctx.shadowColor = 'rgba(200,0,0,.6)'; ctx.shadowBlur = 8;
+                    ctx.fillText('SLAYER', x + s / 2, y + s * .2); ctx.shadowBlur = 0; break;
+                }
+                case 4: { /* Iron Maiden — Nº Beast */
+                    const ibg = ctx.createLinearGradient(x, y, x, y + s); ibg.addColorStop(0, '#000'); ibg.addColorStop(.4, '#180000'); ibg.addColorStop(1, '#0c0000'); ctx.fillStyle = ibg; ctx.fillRect(x, y, s, s);
+                    const fG = ctx.createRadialGradient(x + s * .5, y + s * .78, 0, x + s * .5, y + s * .6, s * .45); fG.addColorStop(0, 'rgba(255,100,0,.95)'); fG.addColorStop(.45, 'rgba(200,20,0,.5)'); fG.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = fG; ctx.fillRect(x, y, s, s);
+                    ctx.fillStyle = 'rgba(255,150,0,.72)';
+                    for (let fi = 0; fi < 5; fi++) { const fx = x + s * (.2 + fi * .14); ctx.beginPath(); ctx.moveTo(fx, y + s * .95); ctx.quadraticCurveTo(fx - s * .04, y + s * (.54 + fi * .04), fx, y + s * (.28 + fi * .05)); ctx.quadraticCurveTo(fx + s * .04, y + s * (.54 + fi * .04), fx + s * .05, y + s * .95); ctx.fill(); }
+                    ctx.textAlign = 'center'; ctx.font = `bold ${Math.round(s * .26)}px Impact,Arial`; ctx.fillStyle = 'rgba(255,40,0,.96)'; ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 12; ctx.fillText('666', x + s / 2, y + s * .38); ctx.shadowBlur = 0;
+                    ctx.strokeStyle = 'rgba(210,210,210,.6)'; ctx.lineWidth = s * .022; ctx.beginPath(); ctx.arc(x + s * .5, y + s * .2, s * .08, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x + s * .5, y + s * .28); ctx.lineTo(x + s * .5, y + s * .5); ctx.stroke();
+                    ctx.font = `bold ${Math.round(s * .085)}px Impact,Arial`; ctx.fillStyle = 'rgba(255,200,200,.8)'; ctx.shadowColor = 'rgba(255,0,0,.5)'; ctx.shadowBlur = 4; ctx.fillText('IRON MAIDEN', x + s / 2, y + s * .94); ctx.shadowBlur = 0; break;
+                }
+                case 5: { /* GNR */
+                    const ag = ctx.createLinearGradient(x, y, x, y + s); ag.addColorStop(0, '#ff6800'); ag.addColorStop(.5, '#e02200'); ag.addColorStop(1, '#6a0000'); ctx.fillStyle = ag; ctx.fillRect(x, y, s, s);
+                    ctx.fillStyle = 'rgba(0,0,0,.88)'; ctx.fillRect(x + s * .44, y + s * .1, s * .12, s * .8); ctx.fillRect(x + s * .18, y + s * .3, s * .64, s * .12);
+                    [[.5, .1], [.5, .92], [.18, .36], [.82, .36]].forEach(([cx, cy]) => { ctx.beginPath(); ctx.arc(x + s * cx, y + s * cy, s * .088, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,.76)'; ctx.fill(); ctx.fillStyle = '#ff5500'; ctx.beginPath(); ctx.arc(x + s * cx - s * .032, y + s * cy - s * .022, s * .016, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(x + s * cx + s * .032, y + s * cy - s * .022, s * .016, 0, Math.PI * 2); ctx.fill(); });
+                    ctx.font = `bold ${Math.round(s * .085)}px Impact,Arial`; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,230,180,.85)'; ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 3; ctx.fillText("GUNS N' ROSES", x + s / 2, y + s * .95); ctx.shadowBlur = 0; break;
+                }
+                case 6: { /* Black Sabbath */
+                    ctx.fillStyle = '#7dc840'; ctx.fillRect(x, y, s, s);
+                    ctx.fillStyle = 'rgba(0,50,0,.15)'; for (let i = 0; i < 18; i++)ctx.fillRect(x + Math.random() * s, y + Math.random() * s, Math.random() * 14 + 2, 1);
+                    ctx.fillStyle = 'rgba(0,0,0,.88)'; ctx.beginPath(); ctx.ellipse(x + s * .5, y + s * .5, s * .06, s * .13, -.2, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(x + s * .48, y + s * .32, s * .06, 0, Math.PI * 2); ctx.fill();
+                    ctx.strokeStyle = 'rgba(0,0,0,.88)'; ctx.lineWidth = s * .027; ctx.beginPath(); ctx.moveTo(x + s * .5, y + s * .44); ctx.lineTo(x + s * .77, y + s * .29); ctx.stroke(); ctx.strokeStyle = 'rgba(215,215,215,.82)'; ctx.lineWidth = s * .016; ctx.beginPath(); ctx.moveTo(x + s * .7, y + s * .27); ctx.lineTo(x + s * .93, y + s * .16); ctx.stroke();
+                    ctx.strokeStyle = 'rgba(0,0,0,.88)'; ctx.lineWidth = s * .027; ctx.beginPath(); ctx.moveTo(x + s * .5, y + s * .62); ctx.lineTo(x + s * .36, y + s * .8); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x + s * .5, y + s * .62); ctx.lineTo(x + s * .64, y + s * .78); ctx.stroke();
+                    ctx.font = `bold ${Math.round(s * .09)}px Impact,Arial`; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillText('BLACK SABBATH', x + s / 2, y + s * .14); break;
+                }
+                case 7: { /* Nirvana */
+                    const nbg = ctx.createLinearGradient(x, y, x, y + s); nbg.addColorStop(0, '#001830'); nbg.addColorStop(.5, '#002d5a'); nbg.addColorStop(1, '#001020'); ctx.fillStyle = nbg; ctx.fillRect(x, y, s, s);
+                    ctx.strokeStyle = 'rgba(80,140,255,.12)'; ctx.lineWidth = 3; for (let r = 0; r < 5; r++) { ctx.beginPath(); ctx.moveTo(x + s * (.15 + r * .18), y); ctx.lineTo(x + s * (r * .22), y + s); ctx.stroke(); }
+                    ctx.fillStyle = 'rgba(255,215,175,.9)'; ctx.beginPath(); ctx.arc(x + s * .47, y + s * .42, s * .1, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.ellipse(x + s * .47, y + s * .58, s * .08, s * .11, 0, 0, Math.PI * 2); ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,215,175,.9)'; ctx.lineWidth = s * .042; ctx.beginPath(); ctx.moveTo(x + s * .47, y + s * .52); ctx.lineTo(x + s * .73, y + s * .43); ctx.stroke();
+                    ctx.fillStyle = 'rgba(0,185,0,.76)'; ctx.fillRect(x + s * .73, y + s * .39, s * .13, s * .09);
+                    ctx.font = `bold ${Math.round(s * .12)}px Arial`; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 3; ctx.fillText('NIRVANA', x + s / 2, y + s * .16); ctx.shadowBlur = 0; break;
+                }
+                case 8: { /* Led Zeppelin IV */
+                    const lbg = ctx.createLinearGradient(x, y, x + s, y + s); lbg.addColorStop(0, '#5c3a10'); lbg.addColorStop(.5, '#7a5020'); lbg.addColorStop(1, '#3a2008'); ctx.fillStyle = lbg; ctx.fillRect(x, y, s, s);
+                    ctx.strokeStyle = 'rgba(0,0,0,.1)'; ctx.lineWidth = .5; for (let i = 0; i < 22; i++) { ctx.beginPath(); ctx.moveTo(x + Math.random() * s, y + Math.random() * s); ctx.lineTo(x + Math.random() * s, y + Math.random() * s); ctx.stroke(); }
+                    ctx.fillStyle = 'rgba(8,4,0,.78)'; ctx.beginPath(); ctx.moveTo(x, y + s); ctx.lineTo(x, y + s * .68); ctx.quadraticCurveTo(x + s * .28, y + s * .38, x + s * .5, y + s * .28); ctx.quadraticCurveTo(x + s * .72, y + s * .42, x + s, y + s * .64); ctx.lineTo(x + s, y + s); ctx.closePath(); ctx.fill();
+                    ctx.fillStyle = 'rgba(35,18,0,.95)'; ctx.fillRect(x + s * .47, y + s * .14, s * .04, s * .15); ctx.beginPath(); ctx.arc(x + s * .49, y + s * .12, s * .04, 0, Math.PI * 2); ctx.fill();
+                    const lanG = ctx.createRadialGradient(x + s * .54, y + s * .19, 0, x + s * .54, y + s * .19, s * .14); lanG.addColorStop(0, 'rgba(255,175,45,.68)'); lanG.addColorStop(1, 'rgba(200,80,0,0)'); ctx.fillStyle = lanG; ctx.beginPath(); ctx.arc(x + s * .54, y + s * .19, s * .14, 0, Math.PI * 2); ctx.fill(); break;
+                }
+                case 9: { /* Pink Floyd Dark Side */
+                    ctx.fillStyle = '#000'; ctx.fillRect(x, y, s, s);
+                    ctx.fillStyle = 'rgba(255,255,255,.88)'; ctx.beginPath(); ctx.moveTo(x + s * .06, y + s * .5); ctx.lineTo(x + s * .4, y + s * .36); ctx.lineTo(x + s * .4, y + s * .64); ctx.closePath(); ctx.fill();
+                    ctx.fillStyle = '#1c1c1c'; ctx.beginPath(); ctx.moveTo(x + s * .36, y + s * .2); ctx.lineTo(x + s * .65, y + s * .5); ctx.lineTo(x + s * .36, y + s * .8); ctx.closePath(); ctx.fill();
+                    ctx.strokeStyle = 'rgba(155,155,155,.72)'; ctx.lineWidth = .9; ctx.beginPath(); ctx.moveTo(x + s * .36, y + s * .2); ctx.lineTo(x + s * .65, y + s * .5); ctx.lineTo(x + s * .36, y + s * .8); ctx.closePath(); ctx.stroke();
+                    ['#ff0000', '#ff8800', '#ffff00', '#00cc00', '#0044ff', '#8800cc'].forEach((c, i, a) => { const t = s * .30 / a.length; ctx.fillStyle = c; ctx.fillRect(x + s * .65, y + s * .35 + i * t, s * .33, t + .5); }); break;
+                }
+            }
+            ctx.restore();
+        }
+
+        /* ── Draw revealed poster frame ──────────────────────────────────────── */
+        function drawRevealedPoster(ra) {
+            const pos = ALBUM_POS[ra.idx], s = ALBUM_SIZE;
+            const x = pos.x, cy = ra.phase === 'done' ? pos.y : ra.animY;
+            const wobble = ra.phase === 'wobbling' ? pos.tilt * Math.sin(ra.af * .28) * (1 - ra.af / 56) : 0;
+            const tilt = (pos.tilt + wobble) * Math.PI / 180;
+            ctx.save();
+            ctx.translate(x + s / 2, cy + s / 2); ctx.rotate(tilt);
+            /* shadow */
+            ctx.fillStyle = 'rgba(0,0,0,.55)'; rrect(-s / 2 + 4, -s / 2 + 5, s + 4, s + 6, 2); ctx.fill();
+            /* frame */
+            const fg = ctx.createLinearGradient(-s / 2 - 4, -s / 2 - 4, s / 2 + 4, s / 2 + 4);
+            fg.addColorStop(0, '#2a1a08'); fg.addColorStop(.5, '#3c2a10'); fg.addColorStop(1, '#1a0c04');
+            rrect(-s / 2 - 4, -s / 2 - 4, s + 8, s + 8, 4); ctx.fillStyle = fg; ctx.fill();
+            ctx.strokeStyle = BR.gold; ctx.lineWidth = 1.3; ctx.stroke();
+            /* art */
+            drawAlbumArt(ra.idx, -s / 2, -s / 2, s);
+            /* inner edge */
+            ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1; rrect(-s / 2, -s / 2, s, s, 1); ctx.stroke();
+            /* bottom band label */
+            ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillRect(-s / 2, -s / 2 + s - 15, s, 15);
+            ctx.font = `bold ${Math.round(s * .11)}px Impact,Arial`; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(201,168,76,.95)';
+            ctx.fillText(ALBUMS[ra.idx % 10].band, 0, -s / 2 + s - 4);
+            /* pushpin */
+            ctx.fillStyle = BR.red; ctx.beginPath(); ctx.arc(0, -s / 2 - 1, 4.5, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = .7; ctx.stroke();
+            ctx.fillStyle = 'rgba(255,150,150,.5)'; ctx.beginPath(); ctx.arc(-1, -s / 2 - 2, 1.5, 0, Math.PI * 2); ctx.fill();
+            /* tape */
+            ctx.globalAlpha = .5; ctx.fillStyle = 'rgba(255,245,200,.8)';
+            ctx.save(); ctx.rotate(-.35); ctx.fillRect(-s * .42, -s * .55, s * .22, 7); ctx.restore();
+            ctx.save(); ctx.rotate(.35); ctx.fillRect(s * .2, -s * .55, s * .22, 7); ctx.restore();
+            ctx.globalAlpha = 1; ctx.restore();
+        }
+
+        function drawAllRevealedPosters() {
+            revealedAlbums.forEach(ra => drawRevealedPoster(ra));
+        }
+
+        function drawBanners() {
+            if (!banners.length) return;
+            const bn = banners[banners.length - 1], maxL = 200;
+            let alpha = 1;
+            if (bn.life > maxL * .85) alpha = (maxL - bn.life) / (maxL * .15);
+            else if (bn.life < 35) alpha = bn.life / 35;
+            const bw = 202, bh = 48, bx = W - bw - 14, by = H - bh - 62;
+            ctx.save(); ctx.globalAlpha = alpha * .92;
+            ctx.fillStyle = 'rgba(10,3,0,.9)'; rrect(bx, by, bw, bh, 6); ctx.fill();
+            ctx.strokeStyle = BR.gold; ctx.lineWidth = 1.2; rrect(bx, by, bw, bh, 6); ctx.stroke();
+            ctx.font = '20px serif'; ctx.globalAlpha = alpha; ctx.fillText('💿', bx + 8, by + 32);
+            ctx.font = `bold 12px Georgia`; ctx.fillStyle = BR.gold; ctx.textAlign = 'left'; ctx.fillText(bn.text, bx + 36, by + 18);
+            ctx.font = '11px Georgia'; ctx.fillStyle = 'rgba(255,255,255,.88)';
+            ctx.fillText((bn.sub.length > 22 ? bn.sub.slice(0, 21) + '…' : bn.sub), bx + 36, by + 35);
+            ctx.textAlign = 'left'; ctx.restore();
+        }
+
+        /* ════════════════════════════════════════════════════════════════════════
+           NEW OBSTACLES
+           ════════════════════════════════════════════════════════════════════════ */
+        function drawAmp(cx, y, w, h) {
+            ctx.save();
+            /* shadow */
+            ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(cx, y + 4, w / 2 + 2, 5, 0, 0, Math.PI * 2); ctx.fill();
+            /* body */
+            const bg = ctx.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0);
+            bg.addColorStop(0, '#111'); bg.addColorStop(.5, '#222'); bg.addColorStop(1, '#111');
+            ctx.fillStyle = bg; rrect(cx - w / 2, y - h, w, h, [5, 5, 3, 3]); ctx.fill();
+            /* top control panel */
+            ctx.fillStyle = '#1a1a1a'; ctx.fillRect(cx - w / 2, y - h, w, h * .22);
+            /* knobs */
+            [cx - w * .3, cx, cx + w * .3].forEach(kx => {
+                ctx.fillStyle = '#3a3a3a'; ctx.beginPath(); ctx.arc(kx, y - h + h * .11, w * .09, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#666'; ctx.beginPath(); ctx.arc(kx, y - h + h * .11, w * .04, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#888'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(kx, y - h + h * .11); ctx.lineTo(kx + w * .06, y - h + h * .06); ctx.stroke();
+            });
+            /* grille cloth */
+            ctx.fillStyle = '#131313'; rrect(cx - w / 2 + 4, y - h + h * .25, w - 8, h * .66, [2, 2, 2, 2]); ctx.fill();
+            /* speaker cone rings */
+            const spR = (w - 14) / 2;
+            ctx.strokeStyle = 'rgba(55,55,55,.9)'; ctx.lineWidth = 1;
+            for (let r = spR; r > 3; r -= 6) { ctx.beginPath(); ctx.arc(cx, y - h + h * .25 + spR + 4, r, 0, Math.PI * 2); ctx.stroke(); }
+            ctx.fillStyle = '#1e1e1e'; ctx.beginPath(); ctx.arc(cx, y - h + h * .25 + spR + 4, spR * .24, 0, Math.PI * 2); ctx.fill();
+            /* handle on top */
+            ctx.strokeStyle = '#555'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(cx - w * .2, y - h); ctx.quadraticCurveTo(cx, y - h - 10, cx + w * .2, y - h); ctx.stroke();
+            /* outline */
+            ctx.strokeStyle = 'rgba(80,80,80,.45)'; ctx.lineWidth = 1; rrect(cx - w / 2, y - h, w, h, [5, 5, 3, 3]); ctx.stroke();
+            /* orange pilot light */
+            ctx.fillStyle = 'rgba(255,120,0,.9)'; ctx.shadowColor = '#ff7700'; ctx.shadowBlur = 5;
+            ctx.beginPath(); ctx.arc(cx + w * .4, y - h + h * .12, 3, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        function drawGuitarObs(cx, y, w, h) {
+            ctx.save();
+            /* shadow */
+            ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(cx, y + 3, w * .35, 4, 0, 0, Math.PI * 2); ctx.fill();
+            /* body lower bout */
+            const sunburst = ctx.createRadialGradient(cx, y - h * .32, w * .05, cx, y - h * .32, w * .52);
+            sunburst.addColorStop(0, '#c0401a'); sunburst.addColorStop(.5, '#8b2010'); sunburst.addColorStop(1, '#3a0a04');
+            ctx.fillStyle = sunburst; ctx.beginPath(); ctx.ellipse(cx, y - h * .32, w * .48, h * .26, 0, 0, Math.PI * 2); ctx.fill();
+            /* upper bout */
+            ctx.fillStyle = sunburst; ctx.beginPath(); ctx.ellipse(cx, y - h * .58, w * .38, h * .2, 0, 0, Math.PI * 2); ctx.fill();
+            /* waist */
+            ctx.fillStyle = '#2a0800'; ctx.beginPath(); ctx.ellipse(cx, y - h * .45, w * .16, h * .08, 0, 0, Math.PI * 2); ctx.fill();
+            /* binding edge */
+            ctx.strokeStyle = 'rgba(255,220,150,.3)'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.ellipse(cx, y - h * .32, w * .48, h * .26, 0, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.ellipse(cx, y - h * .58, w * .38, h * .2, 0, 0, Math.PI * 2); ctx.stroke();
+            /* neck */
+            ctx.fillStyle = '#5c3010'; ctx.fillRect(cx - w * .11, y - h * .86, w * .22, h * .3);
+            /* frets */
+            ctx.strokeStyle = 'rgba(200,180,100,.4)'; ctx.lineWidth = 1;
+            for (let fi = 0; fi < 5; fi++) { ctx.beginPath(); ctx.moveTo(cx - w * .11, y - h * .86 + fi * h * .06); ctx.lineTo(cx + w * .11, y - h * .86 + fi * h * .06); ctx.stroke(); }
+            /* headstock */
+            ctx.fillStyle = '#3a1e08'; ctx.beginPath(); ctx.moveTo(cx - w * .16, y - h * .86); ctx.lineTo(cx - w * .19, y - h); ctx.lineTo(cx + w * .19, y - h); ctx.lineTo(cx + w * .16, y - h * .86); ctx.fill();
+            /* tuning pegs */
+            ctx.fillStyle = 'rgba(200,180,100,.7)';
+            [-1, 0, 1].forEach(side => { [-1, 0, 1].forEach(row => { ctx.beginPath(); ctx.arc(cx + side * w * .15, y - h + row * h * .12 + h * .06, 2.5, 0, Math.PI * 2); ctx.fill(); }); });
+            /* strings */
+            ctx.strokeStyle = 'rgba(220,220,180,.4)'; ctx.lineWidth = .5;
+            [-3, -1, 1, 3].forEach(si => { ctx.beginPath(); ctx.moveTo(cx + si * w * .04, y - h * .96); ctx.lineTo(cx + si * w * .04, y - h * .28); ctx.stroke(); });
+            /* pickup */
+            ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(cx - w * .3, y - h * .46, w * .6, h * .06);
+            ctx.restore();
+        }
+
+        function drawSpeaker(cx, y, w, h) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(cx, y + 4, w / 2 + 2, 5, 0, 0, Math.PI * 2); ctx.fill();
+            const bh = (h - 4) / 2;
+            [y - h, y - bh - 2].forEach(ty => {
+                const cg = ctx.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0);
+                cg.addColorStop(0, '#0a0a0a'); cg.addColorStop(.5, '#1c1c1c'); cg.addColorStop(1, '#0a0a0a');
+                ctx.fillStyle = cg; rrect(cx - w / 2, ty, w, bh, [3, 3, 3, 3]); ctx.fill();
+                /* grille */
+                ctx.fillStyle = '#111'; rrect(cx - w / 2 + 4, ty + 5, w - 8, bh - 10, [2, 2, 2, 2]); ctx.fill();
+                /* cone rings */
+                const sp = (w - 14) / 2;
+                ctx.strokeStyle = 'rgba(50,50,50,.85)'; ctx.lineWidth = 1;
+                for (let r = sp; r > 3; r -= 5) { ctx.beginPath(); ctx.arc(cx, ty + 5 + sp + 3, r, 0, Math.PI * 2); ctx.stroke(); }
+                ctx.fillStyle = '#202020'; ctx.beginPath(); ctx.arc(cx, ty + 5 + sp + 3, sp * .22, 0, Math.PI * 2); ctx.fill();
+                /* edge */
+                ctx.strokeStyle = 'rgba(70,70,70,.35)'; ctx.lineWidth = 1; rrect(cx - w / 2, ty, w, bh, [3, 3, 3, 3]); ctx.stroke();
+                /* corner bolts */
+                ctx.fillStyle = 'rgba(80,80,80,.6)';
+                [[cx - w / 2 + 5, ty + 5], [cx + w / 2 - 5, ty + 5], [cx - w / 2 + 5, ty + bh - 5], [cx + w / 2 - 5, ty + bh - 5]].forEach(([bx, by]) => { ctx.beginPath(); ctx.arc(bx, by, 2.5, 0, Math.PI * 2); ctx.fill(); });
+            });
+            ctx.restore();
+        }
+
+        /* ════════════════════════════════════════════════════════════════════════
+           PLAYER
+           ════════════════════════════════════════════════════════════════════════ */
+        const P = {
+            x: 100, y: GY, w: 46, h: 66, vy: 0, grounded: true, djAvail: false, inv: false, invT: 0, flash: false,
+            reset() { this.y = GY; this.vy = 0; this.grounded = true; this.djAvail = false; this.inv = false; this.invT = 0; this.flash = false; },
+            jump() {
+                if (this.grounded) { this.vy = -15; this.grounded = false; this.djAvail = true; playJump(); }
+                else if (this.djAvail) { this.vy = -12.5; this.djAvail = false; playJump(); spawnBubbles(this.x + this.w / 2, this.y - 10, 8); }
+            },
+            update() {
+                this.vy += .6; this.y += this.vy;
+                if (this.y >= GY) { this.y = GY; this.vy = 0; this.grounded = true; this.djAvail = false; }
+                if (this.inv) { this.invT--; this.flash = Math.floor(this.invT / 5) % 2 === 0; if (this.invT <= 0) { this.inv = false; this.flash = false; } }
+            },
+            hit() {
+                if (this.inv) return; this.inv = true; this.invT = 100;
+                fillLevel = Math.max(0, fillLevel - .22); score = Math.max(0, score - 30);
+                spawnBeerSplash(this.x + this.w / 2, this.y - this.h / 2);
+                addFloat(this.x + this.w / 2, this.y - this.h - 10, '-22%', '#ff7070'); playHit();
+                if (fillLevel <= 0) { fillLevel = 0; state = 'GAME_OVER'; playLose(); }
+            },
+            bounds() { return { x: this.x + 8, y: this.y - this.h + 10, w: this.w - 16, h: this.h - 12 }; },
+            draw() { if (this.flash) return; drawMug(this.x, this.y, this.w, this.h, fillLevel); }
+        };
+
+        /* ── Obstacles spawn ─────────────────────────────────────────────────── */
+        let obstacles = [], obsTimer = 0;
+        function spawn() {
+            const cfg = LEVELS[level - 1];
+            const t = cfg.types[Math.floor(Math.random() * cfg.types.length)];
+            const sx = W + 40;
+            switch (t) {
+                case 'bottle': obs(sx, 'bottle', 22, 56); break;
+                case 'tall': obs(sx, 'bottle', 20, 72, true); break;
+                case 'barrel': obs(sx, 'barrel', 50, 42); break;
+                case 'double': obs(sx, 'bottle', 22, 56); obs(sx + 40, 'bottle', 22, 56); break;
+                case 'doublebarrel': obs(sx, 'barrel', 50, 42); obs(sx + 68, 'barrel', 50, 42); break;
+                case 'trio': obs(sx, 'bottle', 22, 56); obs(sx + 38, 'bottle', 22, 56); obs(sx + 76, 'bottle', 20, 72, true); break;
+                case 'amp': obs(sx, 'amp', 52, 60); break;
+                case 'guitar_obs': obs(sx, 'guitar_obs', 28, 76); break;
+                case 'speaker': obs(sx, 'speaker', 46, 74); break;
+                case 'amp_guitar': obs(sx, 'amp', 52, 60); obs(sx + 74, 'guitar_obs', 28, 76); break;
+            }
+        }
+        function obs(x, type, w, h, tall) { obstacles.push({ x, y: GY, type, w, h, tall: !!tall }); }
+
+        /* ── Particles ────────────────────────────────────────────────────────── */
+        let particles = [];
+        function spawnBeerSplash(x, y) { for (let i = 0; i < 22; i++)particles.push({ x, y, vx: (Math.random() - .5) * 9, vy: Math.random() * -9 - 1, life: 55, maxLife: 55, color: ['#f5a623', '#f8c041', '#e8921a', '#ffd07a'][i % 4], r: Math.random() * 5 + 2, t: 'b' }); }
+        function spawnBubbles(x, y, n) { for (let i = 0; i < n; i++)particles.push({ x: x + (Math.random() - .5) * 20, y, vx: (Math.random() - .5) * 4, vy: Math.random() * -5 - 2, life: 30, maxLife: 30, color: 'rgba(200,240,255,.8)', r: Math.random() * 4 + 1, t: 'b' }); }
+        function spawnConfetti(cx, cy) { const cols = [BR.red, BR.gold, '#FF6B35', '#fff', '#ffe066']; for (let i = 0; i < 120; i++)particles.push({ x: cx + (Math.random() - .5) * 400, y: cy + (Math.random() - .5) * 80, vx: (Math.random() - .5) * 13, vy: Math.random() * -16 - 2, life: 110, maxLife: 110, color: cols[i % cols.length], r: Math.random() * 7 + 2, rot: Math.random() * Math.PI * 2, rv: (Math.random() - .5) * .4, t: 'c' }); }
+        function updateParticles() { for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += .28; p.life--; if (p.rot !== undefined) p.rot += p.rv; if (p.life <= 0) particles.splice(i, 1); } }
+        function drawParticles() { particles.forEach(p => { ctx.save(); ctx.globalAlpha = p.life / p.maxLife; ctx.fillStyle = p.color; if (p.t === 'c') { ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r); } else { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); } ctx.restore(); }); ctx.globalAlpha = 1; }
+
+        /* ── Floats ───────────────────────────────────────────────────────────── */
+        let floats = [];
+        function addFloat(x, y, txt, col = '#7fff7f') { floats.push({ x, y, txt, col, life: 65, vy: -1.4 }); }
+        function updateFloats() { for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.y += f.vy; f.life--; if (f.life <= 0) floats.splice(i, 1); } }
+        function drawFloats() { floats.forEach(f => { ctx.save(); ctx.globalAlpha = f.life / 65; ctx.font = 'bold 15px Georgia'; ctx.fillStyle = f.col; ctx.textAlign = 'center'; ctx.fillText(f.txt, f.x, f.y); ctx.restore(); }); ctx.textAlign = 'left'; ctx.globalAlpha = 1; }
+
+        /* ── Vinyl + guitar bg decorations ───────────────────────────────────── */
+        let vinylRot = 0;
+        function drawVinyl(cx, cy, r, rot) {
+            ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot);
+            ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(2, 3, r, r * .18, .18, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
+            const dg = ctx.createRadialGradient(0, 0, r * .1, 0, 0, r); dg.addColorStop(0, '#1c1c1c'); dg.addColorStop(.55, '#0e0e0e'); dg.addColorStop(1, '#060606'); ctx.fillStyle = dg; ctx.fill();
+            for (let i = .28; i < .97; i += .065) { ctx.beginPath(); ctx.arc(0, 0, r * i, 0, Math.PI * 2); ctx.strokeStyle = `rgba(255,255,255,${.026 + .014 * Math.sin(i * 38 + rot * 3)})`; ctx.lineWidth = .7; ctx.stroke(); }
+            ctx.beginPath(); ctx.arc(0, 0, r * .27, 0, Math.PI * 2); const lg = ctx.createRadialGradient(-r * .06, -r * .06, 0, 0, 0, r * .27); lg.addColorStop(0, '#c03020'); lg.addColorStop(1, '#6e1a18'); ctx.fillStyle = lg; ctx.fill();
+            ctx.beginPath(); ctx.arc(0, 0, r * .04, 0, Math.PI * 2); ctx.fillStyle = '#000'; ctx.fill(); ctx.restore();
+        }
+        function drawGuitarBg(x, y, scale, alpha) {
+            ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.scale(scale, scale);
+            ctx.fillStyle = '#1a0800'; ctx.strokeStyle = 'rgba(226,75,74,.1)'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.ellipse(0, 0, 28, 34, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.beginPath(); ctx.ellipse(0, -38, 22, 26, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = 'rgba(10,3,0,.6)'; ctx.beginPath(); ctx.ellipse(0, -19, 10, 12, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#1a0800'; ctx.fillRect(-5, -130, 10, 96); ctx.beginPath(); ctx.moveTo(-5, -130); ctx.lineTo(-12, -158); ctx.lineTo(12, -158); ctx.lineTo(5, -130); ctx.fill();
+            ctx.restore();
+        }
+
+        /* ── Draw: Mug ────────────────────────────────────────────────────────── */
+        function drawMug(x, y, w, h, fill) {
+            const top = y - h; ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(x + w / 2, y + 4, w / 2 + 2, 6, 0, 0, Math.PI * 2); ctx.fill();
+            rrect(x, top, w, h, [9, 9, 5, 5]); ctx.fillStyle = 'rgba(180,220,255,.18)'; ctx.fill();
+            const pad = 4, innerH = h - pad * 2, fillH = innerH * Math.max(0, fill), fillY = top + pad + (innerH - fillH);
+            ctx.save(); rrect(x + pad, top + pad, w - pad * 2, innerH, [5, 5, 3, 3]); ctx.clip();
+            const bg = ctx.createLinearGradient(x, fillY, x + w, fillY + fillH);
+            bg.addColorStop(0, '#b86e10'); bg.addColorStop(.4, '#f5a623'); bg.addColorStop(.75, '#f8c041'); bg.addColorStop(1, '#e09010');
+            ctx.fillStyle = bg; ctx.fillRect(x + pad, fillY, w - pad * 2, fillH);
+            if (fill > .02) { ctx.fillStyle = 'rgba(255,230,130,.45)'; ctx.fillRect(x + pad, fillY, w - pad * 2, 3); }
+            if (fill > .04) { ctx.fillStyle = '#fffef0';[[x + pad + 5, fillY - 4, 6], [x + pad + 14, fillY - 6, 7], [x + pad + 24, fillY - 4, 6], [x + pad + 33, fillY - 5, 5]].forEach(([cx, cy, r]) => { ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill(); }); ctx.fillRect(x + pad, fillY - 2, w - pad * 2, 4); if (fill > .92) { ctx.globalAlpha = Math.min(1, (fill - .92) / .08); ctx.beginPath(); ctx.arc(x + w * .3, top + 2, 5, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(x + w * .6, top, 6, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; } }
+            ctx.restore();
+            ctx.fillStyle = 'rgba(255,255,255,.16)'; rrect(x + 5, top + 7, 6, h * .58, 3); ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,.06)'; rrect(x + 14, top + 10, 4, h * .4, 2); ctx.fill();
+            rrect(x, top, w, h, [9, 9, 5, 5]); ctx.strokeStyle = 'rgba(180,225,255,.85)'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.beginPath(); ctx.arc(x + w + 12, top + h * .5, 14, -Math.PI * .55, Math.PI * .55); ctx.strokeStyle = 'rgba(180,225,255,.8)'; ctx.lineWidth = 8; ctx.stroke();
+            ctx.beginPath(); ctx.arc(x + w + 12, top + h * .5, 14, -Math.PI * .55, Math.PI * .55); ctx.strokeStyle = 'rgba(120,180,230,.45)'; ctx.lineWidth = 4; ctx.stroke();
+            if (h > 40) { ctx.save(); ctx.globalAlpha = .5; ctx.font = `bold ${Math.round(h * .18)}px Georgia`; ctx.fillStyle = BR.gold; ctx.textAlign = 'center'; ctx.fillText('BR', x + w / 2, top + h * .52); ctx.restore(); }
+            ctx.restore();
+        }
+
+        /* ── Bottle ───────────────────────────────────────────────────────────── */
+        function drawBottle(cx, y, w, h, tall) {
+            ctx.save();
+            const shade = tall ? '#163f16' : '#1a5a1a', mid = tall ? '#226222' : '#2a7a30', lit = tall ? '#2e7e2e' : '#38a040';
+            const bh = h * .63, nw = w * .46, nh = h * .28, ch = h * .09;
+            ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(cx, y + 3, w / 2 + 1, 4, 0, 0, Math.PI * 2); ctx.fill();
+            const bg = ctx.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0); bg.addColorStop(0, shade); bg.addColorStop(.25, mid); bg.addColorStop(.55, mid); bg.addColorStop(.82, lit); bg.addColorStop(1, shade);
+            ctx.fillStyle = bg; rrect(cx - w / 2, y - bh, w, bh, [3, 3, 2, 2]); ctx.fill();
+            ctx.fillStyle = mid; rrect(cx - nw / 2, y - bh - nh, nw, nh, [2, 2, 0, 0]); ctx.fill();
+            ctx.fillStyle = '#a02818'; rrect(cx - nw / 2 - 2, y - bh - nh - ch, nw + 4, ch, [2, 2, 0, 0]); ctx.fill();
+            ctx.fillStyle = '#c03020'; ctx.fillRect(cx - nw / 2, y - bh - nh - ch, nw, ch * .4);
+            ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(cx - w / 2 + 4, y - bh + bh * .22, w - 8, bh * .42);
+            ctx.fillStyle = 'rgba(255,255,255,.1)'; rrect(cx - w / 2 + 3, y - bh, 4, bh * .78, 2); ctx.fill();
+            ctx.restore();
+        }
+
+        /* ── Barrel ───────────────────────────────────────────────────────────── */
+        function drawBarrel(cx, y, w, h) {
+            ctx.save(); const cy_ = y - h / 2;
+            ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(cx, y + 5, w / 2 + 3, 7, 0, 0, Math.PI * 2); ctx.fill();
+            const wg = ctx.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0); wg.addColorStop(0, '#250c00'); wg.addColorStop(.2, '#5c2810'); wg.addColorStop(.5, '#7a3a12'); wg.addColorStop(.82, '#5c2810'); wg.addColorStop(1, '#250c00');
+            ctx.fillStyle = wg; ctx.beginPath(); ctx.ellipse(cx, cy_, w / 2, h / 2, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 1;[-9, -1, 7].forEach(dx => { ctx.beginPath(); ctx.moveTo(cx + dx, y - h + 6); ctx.lineTo(cx + dx, y - 5); ctx.stroke(); });
+            ctx.lineWidth = 4;[.18, .5, .82].forEach(t => { const by = y - h + h * t, bw = (w / 2) * (.75 + .35 * Math.sin(Math.PI * t)); ctx.strokeStyle = '#777'; ctx.beginPath(); ctx.ellipse(cx, by, bw, h * .065, 0, 0, Math.PI * 2); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(cx, by - 1, bw, h * .065, 0, 0, Math.PI); ctx.stroke(); ctx.lineWidth = 4; });
+            ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.beginPath(); ctx.ellipse(cx - w * .15, cy_ - h * .1, w * .12, h * .17, -.3, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+        }
+
+        /* ── Background ───────────────────────────────────────────────────────── */
+        let bgX = 0;
+        const guitarBgPos = [{ x: .12, y: .38, s: .52, a: .06, rot: .15 }, { x: .36, y: .42, s: .44, a: .05, rot: -.1 }, { x: .62, y: .35, s: .58, a: .06, rot: .08 }, { x: .86, y: .40, s: .48, a: .05, rot: -.05 }];
+        const vinylDeco = [{ fx: .07, fy: .3, r: 22 }, { fx: .3, fy: .24, r: 18 }, { fx: .52, fy: .32, r: 26 }, { fx: .74, fy: .26, r: 18 }, { fx: .92, fy: .28, r: 21 }];
+
+        function drawBgFar() {
+            const bg = ctx.createLinearGradient(0, 0, 0, GY); bg.addColorStop(0, '#0f0400'); bg.addColorStop(.45, '#1a0800'); bg.addColorStop(1, '#2e1004'); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, GY);
+            const bOff = -(bgX * .04) % 64; ctx.strokeStyle = 'rgba(100,40,10,.07)'; ctx.lineWidth = 1;
+            for (let row = 0; row < 5; row++) { const ry = 18 + row * 30, shift = (row % 2) * 32; for (let c = -1; c < W / 64 + 2; c++)ctx.strokeRect(bOff + c * 64 + shift, ry, 62, 28); }
+            guitarBgPos.forEach(g => { const px = ((g.x * W * 2) - bgX * .12) % (W * 2); const gx = px > W + 80 ? px - W * 2 : px; if (gx > -80 && gx < W + 80) { ctx.save(); ctx.translate(gx, g.y * GY); ctx.rotate(g.rot); drawGuitarBg(0, 0, g.s, g.a); ctx.restore(); } });
+            vinylDeco.forEach((v, i) => { const px = ((v.fx * W * 2) - bgX * .18) % (W * 2); const vx = px > W + 55 ? px - W * 2 : px; if (vx > -55 && vx < W + 55) drawVinyl(vx, v.fy * GY, v.r, vinylRot * (.4 + i * .12)); });
+            for (let i = 0; i < 4; i++) { const lx = ((i * 210) - bgX * .06) % (W + 260) - 130; const lg = ctx.createRadialGradient(lx, 0, 0, lx, 0, 105); lg.addColorStop(0, 'rgba(226,75,74,.07)'); lg.addColorStop(.5, 'rgba(201,168,76,.04)'); lg.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = lg; ctx.fillRect(lx - 105, 0, 210, 145); }
+        }
+
+        function drawShelf(sx, y, tw, mid) {
+            ctx.fillStyle = mid ? '#2e1204' : '#3a1808'; ctx.fillRect(sx, y + 30, tw, 10);
+            ctx.fillStyle = mid ? '#5a2810' : '#6b3015'; ctx.fillRect(sx, y + 30, tw, 2);
+            const sp = 50, cnt = Math.ceil(tw / sp) + 2;
+            for (let i = 0; i < cnt; i++) {
+                const bx = sx + i * sp; if (bx < -40 || bx > W + 40) continue;
+                const h2 = mid ? 28 : 36, w2 = mid ? 10 : 13, hue = (i * 73 + y) % 360;
+                ctx.fillStyle = `hsl(${hue},35%,${mid ? 12 : 14}%)`; rrect(bx - w2 / 2, y - h2, w2, h2 + 30, [2, 2, 0, 0]); ctx.fill();
+                ctx.fillRect(bx - w2 * .38, y - h2 - 10, w2 * .76, 10);
+                ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(bx - w2 / 2 + 2, y - h2, 2, h2 * .75);
+            }
+        }
+
+        function drawBgNear() {
+            /* shelves with bottles restored */
+            const s1 = -(bgX * .22) % (W * 1.8); drawShelf(s1, 88, W * 1.8); drawShelf(s1 + W * 1.8, 88, W * 1.8);
+            const s2 = -(bgX * .4) % (W * 1.5); drawShelf(s2, 178, W * 1.5, true); drawShelf(s2 + W * 1.5, 178, W * 1.5, true);
+            /* rock icons */
+            const icons = ['🤘', '🎸', '💀', '⚡', '🎵', '🤘', '🎸', '⚡'];
+            ctx.font = '22px serif'; icons.forEach((ic, i) => { const ix = ((i * 142) - bgX * .3) % (W * 1.7) - 80; if (ix > -40 && ix < W + 40) { ctx.globalAlpha = .25; ctx.fillText(ic, ix, 215); ctx.globalAlpha = 1; } });
+            /* ground counter */
+            const gg = ctx.createLinearGradient(0, GY, 0, H); gg.addColorStop(0, '#7c4010'); gg.addColorStop(.06, '#8b4a18'); gg.addColorStop(.3, '#6b3610'); gg.addColorStop(1, '#3a1808'); ctx.fillStyle = gg; ctx.fillRect(0, GY, W, H - GY);
+            ctx.fillStyle = '#b06030'; ctx.fillRect(0, GY, W, 3);
+            ctx.fillStyle = 'rgba(226,75,74,.06)'; ctx.fillRect(0, GY, W, 1);
+            ctx.fillStyle = 'rgba(255,200,100,.09)'; ctx.fillRect(0, GY + 1, W, 1);
+            /* wood grain */
+            ctx.strokeStyle = 'rgba(0,0,0,.08)'; ctx.lineWidth = 1;
+            for (let i = 0; i < 14; i++) { const gx = (-(bgX * .8) + i * 65) % W; ctx.beginPath(); ctx.moveTo(gx, GY + 4); ctx.lineTo(gx + 28, H); ctx.stroke(); ctx.beginPath(); ctx.moveTo(gx + 35, GY + 4); ctx.lineTo(gx + 58, H); ctx.stroke(); }
+            /* ── BARRACUDA neon sign on bar front ── */
+            ctx.save();
+            ctx.textAlign = 'center';
+            const pulse = .75 + .25 * Math.sin(frame * .045);
+            ctx.font = 'bold italic 21px Georgia';
+            ctx.fillStyle = `rgba(226,75,74,${pulse})`;
+            ctx.shadowColor = BR.red; ctx.shadowBlur = 18 * pulse;
+            ctx.fillText('◆  B A R - R A C U D A  ◆', W / 2, GY + 22);
+            ctx.shadowBlur = 7 * pulse; ctx.fillText('◆  B A R - R A C U D A  ◆', W / 2, GY + 22); ctx.shadowBlur = 0;
+            ctx.font = '9px Georgia'; ctx.letterSpacing = '3px';
+            ctx.fillStyle = `rgba(201,168,76,${pulse * .65})`;
+            ctx.shadowColor = BR.gold; ctx.shadowBlur = 8 * pulse;
+            ctx.fillText('C L Á S I C O S', W / 2, GY + 35); ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        /* ── HUD ──────────────────────────────────────────────────────────────── */
+        function drawHUD() {
+            ctx.fillStyle = 'rgba(8,2,0,.76)'; rrect(10, 8, W - 20, 52, 8); ctx.fill();
+            ctx.strokeStyle = 'rgba(226,75,74,.26)'; ctx.lineWidth = 1; rrect(10, 8, W - 20, 52, 8); ctx.stroke();
+            ctx.font = 'bold 13px Georgia'; ctx.textAlign = 'left'; ctx.fillStyle = BR.gold; ctx.fillText(`NIVEL ${level}  ·  ${LEVELS[level - 1].label}`, 20, 32);
+            ctx.font = 'bold 14px Georgia'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText(`⭐ ${score}`, W / 2, 32);
+            for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(W / 2 - 40 + i * 20, 48, 5, 0, Math.PI * 2); ctx.fillStyle = i + 1 < level ? BR.gold : i + 1 === level ? BR.red : 'rgba(201,168,76,.2)'; ctx.fill(); if (i + 1 === level) { ctx.strokeStyle = BR.red; ctx.lineWidth = 1.5; ctx.stroke(); } }
+            ctx.font = 'bold 10px Georgia'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(201,168,76,.55)'; ctx.fillText(`💿 ${nextAlbum}/10`, W / 2, 50);
+            const bw = 175, bh = 20, bx = W - bw - 22, by = 18;
+            ctx.fillStyle = '#0f0400'; rrect(bx, by, bw, bh, 5); ctx.fill();
+            if (fillLevel > .001) {
+                const fg = ctx.createLinearGradient(bx, 0, bx + bw, 0); fg.addColorStop(0, '#b86e10'); fg.addColorStop(.5, '#f5a623'); fg.addColorStop(1, '#ffe066');
+                ctx.fillStyle = fg; rrect(bx, by, bw * fillLevel, bh, [5, 5, fillLevel > .99 ? 5 : 1, fillLevel > .99 ? 5 : 1]); ctx.fill();
+                if (fillLevel < .98) { ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.ellipse(bx + bw * fillLevel - 6, by + bh / 2, 7, bh / 2 - 1, 0, 0, Math.PI * 2); ctx.fill(); }
+                ctx.font = 'bold 11px Georgia'; ctx.textAlign = 'center'; ctx.fillStyle = fillLevel > .48 ? '#1a0800' : '#FFD700'; ctx.fillText(Math.round(fillLevel * 100) + '%', bx + bw * fillLevel / 2, by + bh - 4);
+            }
+            ctx.strokeStyle = BR.gold; ctx.lineWidth = 1.5; rrect(bx, by, bw, bh, 5); ctx.stroke();
+            ctx.font = '22px serif'; ctx.textAlign = 'left'; ctx.fillText('🍺', bx - 30, by + bh);
+            ctx.textAlign = 'left'; ctx.globalAlpha = 1;
+        }
+
+        /* ── Overlay ──────────────────────────────────────────────────────────── */
+        function overlay(title, sub, hint, col, showLogo = false) {
+            ctx.fillStyle = 'rgba(5,1,0,.84)'; ctx.fillRect(0, 0, W, H);
+            if (showLogo) { ctx.save(); ctx.globalAlpha = .05; for (let i = 0; i < 3; i++)drawVinyl(W * (.15 + i * .35), H * .5, 55, vinylRot * (1 + i * .5)); ctx.restore(); }
+            if (showLogo && logoImg.complete && logoImg.naturalWidth > 0) {
+                const lr = 52, lx = W / 2, ly = H / 2 - 108;
+                ctx.save(); ctx.beginPath(); ctx.arc(lx, ly, lr, 0, Math.PI * 2); ctx.shadowColor = BR.red; ctx.shadowBlur = 28; ctx.strokeStyle = BR.red; ctx.lineWidth = 3; ctx.stroke(); ctx.clip(); ctx.drawImage(logoImg, lx - lr, ly - lr, lr * 2, lr * 2); ctx.restore();
+                ctx.beginPath(); ctx.arc(W / 2, H / 2 - 108, lr + 5, 0, Math.PI * 2); ctx.strokeStyle = `rgba(201,168,76,${.4 + .28 * Math.sin(frame * .04)})`; ctx.lineWidth = 2; ctx.stroke();
+            }
+            const sc = .88 + .12 * Math.sin(frame * .06); const ty = showLogo ? H / 2 - 26 : H / 2 - 55;
+            ctx.save(); ctx.translate(W / 2, ty); ctx.font = `bold ${Math.round(44 * sc)}px Georgia`; ctx.textAlign = 'center'; ctx.shadowColor = col; ctx.shadowBlur = 28; ctx.fillStyle = col; ctx.fillText(title, 0, 0); ctx.shadowBlur = 8; ctx.fillText(title, 0, 0); ctx.shadowBlur = 0; ctx.restore();
+            if (sub) { ctx.font = '20px Georgia'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText(sub, W / 2, showLogo ? H / 2 + 24 : H / 2 + 14); }
+            ctx.globalAlpha = .5 + .5 * Math.sin(frame * .05); ctx.font = '14px Georgia'; ctx.fillStyle = BR.gold; ctx.textAlign = 'center'; ctx.fillText(hint, W / 2, showLogo ? H / 2 + 62 : H / 2 + 68); ctx.globalAlpha = 1; ctx.textAlign = 'left';
+            if (showLogo) { ctx.font = 'bold 11px Georgia'; ctx.textAlign = 'center'; ctx.fillStyle = `rgba(201,168,76,${.3 + .1 * Math.sin(frame * .03)})`; ctx.fillText('◆  BAR-RACUDA CLÁSICOS  ◆', W / 2, H - 18); ctx.textAlign = 'left'; }
+        }
+
+        /* ── State / Init ─────────────────────────────────────────────────────── */
+        let state = 'START', level = 1, fillLevel = 0, score = 0, frame = 0;
+        function initLevel(lv) { level = lv; fillLevel = 0; obstacles = []; obsTimer = 0; particles = []; floats = []; P.reset(); banners = []; }
+        function newGame() { score = 0; nextAlbum = 0; revealedAlbums = []; initLevel(1); }
+        function onInput() {
+            if (state === 'START') { state = 'PLAYING'; initLevel(1); }
+            else if (state === 'PLAYING') { P.jump(); }
+            else if (state === 'LEVEL_COMPLETE') { if (level < 5) { level++; state = 'PLAYING'; initLevel(level); } else state = 'WIN'; }
+            else if (state === 'GAME_OVER') { state = 'PLAYING'; initLevel(level); }
+            else if (state === 'WIN') { newGame(); state = 'START'; }
+        }
+        document.addEventListener('keydown', e => { if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); onInput(); } });
+        canvas.addEventListener('click', onInput);
+        canvas.addEventListener('touchstart', e => { e.preventDefault(); onInput(); }, { passive: false });
+
+        /* ── Collision ────────────────────────────────────────────────────────── */
+        function collide() {
+            const pb = P.bounds();
+            for (const o of obstacles) {
+                const ol = o.x - o.w / 2 + 4, or_ = o.x + o.w / 2 - 4, ot = o.y - o.h + 5, ob = o.y - 2;
+                if (pb.x < or_ && pb.x + pb.w > ol && pb.y < ob && pb.y + pb.h > ot) { P.hit(); return; }
+            }
+        }
+
+        /* ── GAME LOOP ────────────────────────────────────────────────────────── */
+        function loop() {
+            frame++; vinylRot += .008;
+            ctx.clearRect(0, 0, W, H);
+
+            /* z-order: far bg → shelves → revealed posters (over shelves) → gameplay → HUD */
+            drawBgFar();
+            drawBgNear();            /* shelves + ground + Barracuda sign */
+            drawAllRevealedPosters(); /* album posters on top of shelves */
+
+            if (state === 'PLAYING') {
+                const cfg = LEVELS[level - 1];
+                bgX += cfg.speed; obsTimer++;
+                if (obsTimer >= cfg.interval) { spawn(); obsTimer = 0; }
+                for (let i = obstacles.length - 1; i >= 0; i--) {
+                    obstacles[i].x -= cfg.speed;
+                    if (obstacles[i].x < -80) { obstacles.splice(i, 1); score += 15; addFloat(P.x + P.w / 2, P.y - P.h - 15, '+15', '#7fff7f'); }
+                }
+                P.update(); collide();
+                fillLevel += cfg.fillRate;
+                checkAlbumUnlocks();
+                if (fillLevel >= 1) { fillLevel = 1; state = 'LEVEL_COMPLETE'; spawnConfetti(W / 2, H / 2); score += 300 * level; if (level === 5) setTimeout(playWin, 50); else playLevelUp(); }
+            }
+
+            updateRevealedAlbums();
+
+            obstacles.forEach(o => {
+                if (o.type === 'bottle') drawBottle(o.x, o.y, o.w, o.h, o.tall);
+                else if (o.type === 'barrel') drawBarrel(o.x, o.y, o.w, o.h);
+                else if (o.type === 'amp') drawAmp(o.x, o.y, o.w, o.h);
+                else if (o.type === 'guitar_obs') drawGuitarObs(o.x, o.y, o.w, o.h);
+                else if (o.type === 'speaker') drawSpeaker(o.x, o.y, o.w, o.h);
+            });
+
+            if (state !== 'START') P.draw();
+            updateParticles(); drawParticles();
+            updateFloats(); drawFloats();
+            drawBanners();
+            drawHUD();
+
+            if (state === 'START') overlay('🤘 BEER JUMP 🤘', '¡Llena la jarra saltando obstáculos!', 'ESPACIO · CLIC · TAP  para comenzar', BR.red, true);
+            if (state === 'LEVEL_COMPLETE') overlay(`🍺 NIVEL ${level} COMPLETADO!`, '¡Jarra llena! ¡Salud! 🤘', level < 5 ? 'ESPACIO / TAP  →  Siguiente nivel' : 'ESPACIO / TAP  →  Último nivel', BR.gold, false);
+            if (state === 'GAME_OVER') overlay('💧 ¡DERRAMASTE!', 'La jarra se vació… reinténtalo', 'ESPACIO / TAP  para reintentar', '#FF5555', false);
+            if (state === 'WIN') overlay('🏆 ¡CAMPEÓN DEL BAR! 🏆', `¡Todos los niveles superados!  ⭐ ${score} pts`, 'ESPACIO / TAP  para jugar de nuevo', BR.gold, true);
+
+            requestAnimationFrame(loop);
+        }
+        loop();
+    </script>
+</body>
+</html>

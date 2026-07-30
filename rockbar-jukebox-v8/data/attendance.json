@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "empleadoId": 1,
+    "entrada": "2026-07-29T14:16:08.488Z",
+    "salida": "2026-07-29T15:28:14.815Z",
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": null
+  },
+  {
+    "id": 2,
+    "empleadoId": 2,
+    "entrada": "2026-07-29T14:16:56.899Z",
+    "salida": "2026-07-29T14:22:18.058Z",
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": null
+  },
+  {
+    "id": 3,
+    "empleadoId": 1,
+    "entrada": "2026-07-29T15:36:33.659Z",
+    "salida": "2026-07-29T15:48:39.881Z",
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": null
+  },
+  {
+    "id": 4,
+    "empleadoId": 1,
+    "entrada": "2026-07-29T15:57:21.555Z",
+    "salida": "2026-07-29T16:49:16.859Z",
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": null
+  },
+  {
+    "id": 5,
+    "empleadoId": 2,
+    "entrada": "2026-07-29T17:31:02.785Z",
+    "salida": "2026-07-29T23:27:09.300Z",
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": null
+  }
+]

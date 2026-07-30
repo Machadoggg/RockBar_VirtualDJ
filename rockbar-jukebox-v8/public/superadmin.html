@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Jukebox - Superadmin</title>
+<link rel="stylesheet" href="/style.css" />
+<style>
+  main { max-width: 900px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  th { color: var(--text-dim); font-weight: 600; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+  input[type="password"], input[type="text"], input[type="number"] {
+    padding: 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg-card); color: var(--text);
+  }
+  button.action { background: var(--red); color: white; border: none; border-radius: 8px; padding: 10px 14px; cursor: pointer; font-weight: 600; }
+  button.secondary { background: var(--bg-card); border: 1px solid var(--border); color: var(--text); }
+  tr.inactive { opacity: 0.45; }
+  .form-box { max-width: 460px; display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>🔐 Superadmin — Personal</h1>
+    <p class="subtitle">Alta, baja y edicion de empleados</p>
+  </header>
+
+  <main>
+    <div class="row">
+      <input id="tokenInput" type="password" placeholder="Token de superadmin" />
+      <button class="action" id="loadBtn">Entrar</button>
+    </div>
+
+    <div id="content" hidden>
+      <table>
+        <thead>
+          <tr><th>Nombre</th><th>Rol</th><th>PIN</th><th>Tarifa/hora</th><th>Estado</th><th></th></tr>
+        </thead>
+        <tbody id="staffBody"></tbody>
+      </table>
+
+      <h2 style="margin-top:30px;">🕐 Turnos fichados</h2>
+      <div id="openShiftsWarning" class="error-state" hidden></div>
+      <table>
+        <thead>
+          <tr><th>Empleado</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Origen</th><th></th></tr>
+        </thead>
+        <tbody id="attendanceBody"></tbody>
+      </table>
+
+
+      <h2 style="margin-top:30px;">💰 Nomina / reportes</h2>
+      <div class="row">
+        <div>
+          <label style="display:block;font-size:.75rem;color:var(--text-dim);margin-bottom:4px;">Desde</label>
+          <input type="date" id="payrollDesde" />
+        </div>
+        <div>
+          <label style="display:block;font-size:.75rem;color:var(--text-dim);margin-bottom:4px;">Hasta</label>
+          <input type="date" id="payrollHasta" />
+        </div>
+        <button class="action secondary" id="quincenaActualBtn">Quincena actual</button>
+        <button class="action secondary" id="quincenaAnteriorBtn">Quincena anterior</button>
+        <button class="action" id="calcularPayrollBtn">Calcular</button>
+      </div>
+      
+      <table>
+        <thead>
+          <tr><th>Empleado</th><th>Rol</th><th>Tarifa/hora</th><th>Turnos</th><th>Horas</th><th>Total</th></tr>
+        </thead>
+        <tbody id="payrollBody"></tbody>
+      </table>
+      <p id="payrollWarning" class="error-state" hidden></p>
+      <button class="action secondary" id="exportCsvBtn" style="margin-top:10px;" hidden>⬇️ Exportar CSV</button>
+
+
+      <h2 style="margin-top:26px;" id="formTitle">➕ Nuevo empleado</h2>
+      <div class="form-box">
+        <input type="hidden" id="staffId" />
+        <input id="staffNombre" type="text" placeholder="Nombre *" />
+        <input id="staffRol" type="text" placeholder="Rol (bartender, mesero, dj, seguridad...)" />
+        <input id="staffPin" type="text" placeholder="PIN de 4 digitos *" maxlength="4" />
+        <input id="staffTarifa" type="number" placeholder="Tarifa por hora *" min="0" step="0.01" />
+        <div class="row">
+          <button class="action" id="saveStaffBtn">Guardar</button>
+          <button class="action secondary" id="cancelStaffBtn">Cancelar</button>
+        </div>
+        <p id="staffStatus" class="error-state" hidden></p>
+      </div>
+    </div>
+
+    <p id="msg" class="error-state" hidden></p>
+  </main>
+
+  <script>
+    const tokenInput = document.getElementById('tokenInput');
+    const loadBtn = document.getElementById('loadBtn');
+    const content = document.getElementById('content');
+    const staffBody = document.getElementById('staffBody');
+    const msg = document.getElementById('msg');
+
+    const formTitle = document.getElementById('formTitle');
+    const staffIdInput = document.getElementById('staffId');
+    const staffNombreInput = document.getElementById('staffNombre');
+    const staffRolInput = document.getElementById('staffRol');
+    const staffPinInput = document.getElementById('staffPin');
+    const staffTarifaInput = document.getElementById('staffTarifa');
+    const saveStaffBtn = document.getElementById('saveStaffBtn');
+    const cancelStaffBtn = document.getElementById('cancelStaffBtn');
+    const staffStatus = document.getElementById('staffStatus');
+
+    const attendanceBody = document.getElementById('attendanceBody');
+    const openShiftsWarning = document.getElementById('openShiftsWarning');
+
+    const payrollDesde = document.getElementById('payrollDesde');
+    const payrollHasta = document.getElementById('payrollHasta');
+    const payrollBody = document.getElementById('payrollBody');
+    const payrollWarning = document.getElementById('payrollWarning');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    let lastPayrollRange = null;
+
+
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function getToken() {
+      return tokenInput.value.trim() || sessionStorage.getItem('jukebox_superadmin_token') || '';
+    }
+
+    let currentStaff = [];
+
+    async function loadStaff() {
+      const token = getToken();
+      if (!token) return;
+      sessionStorage.setItem('jukebox_superadmin_token', token);
+
+      const res = await fetch(`/api/superadmin/staff?token=${encodeURIComponent(token)}`);
+      if (!res.ok) {
+        msg.hidden = false;
+        msg.textContent = 'Token invalido.';
+        content.hidden = true;
+        return;
+      }
+      msg.hidden = true;
+      content.hidden = false;
+      currentStaff = await res.json();
+      renderStaff();
+      loadAttendance(); // ← esta línea es la que hace que la tabla de turnos se llene
+    }
+
+    function renderStaff() {
+      staffBody.innerHTML = '';
+      for (const s of currentStaff) {
+        const tr = document.createElement('tr');
+        if (!s.activo) tr.className = 'inactive';
+        tr.innerHTML = `
+          <td>${escapeHtml(s.nombre)}</td>
+          <td>${escapeHtml(s.rol || '-')}</td>
+          <td>${escapeHtml(s.pin)}</td>
+          <td>$${Number(s.tarifaPorHora).toLocaleString()}</td>
+          <td>${s.activo ? 'Activo' : 'Inactivo'}</td>
+          <td>
+            <button class="action secondary" data-edit="${s.id}">Editar</button>
+            ${s.activo
+              ? `<button class="action secondary" data-deactivate="${s.id}">Dar de baja</button>`
+              : `<button class="action secondary" data-reactivate="${s.id}">Reactivar</button>`}
+          </td>
+        `;
+        staffBody.appendChild(tr);
+      }
+
+      staffBody.querySelectorAll('[data-edit]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const s = currentStaff.find((x) => x.id === Number(btn.dataset.edit));
+          if (!s) return;
+          formTitle.textContent = '✏️ Editar empleado';
+          staffIdInput.value = s.id;
+          staffNombreInput.value = s.nombre;
+          staffRolInput.value = s.rol || '';
+          staffPinInput.value = ''; // se deja vacio: solo se cambia si se escribe uno nuevo
+          staffPinInput.placeholder = `PIN actual: ${s.pin} (dejar vacio para no cambiar)`;
+          staffTarifaInput.value = s.tarifaPorHora;
+          staffNombreInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      });
+
+      staffBody.querySelectorAll('[data-deactivate]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('¿Dar de baja a este empleado? Ya no va a poder fichar.')) return;
+          await fetch(`/api/superadmin/staff/${btn.dataset.deactivate}/deactivate?token=${encodeURIComponent(getToken())}`, {
+            method: 'POST',
+          });
+          loadStaff();
+        });
+      });
+
+      staffBody.querySelectorAll('[data-reactivate]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const res = await fetch(`/api/superadmin/staff/${btn.dataset.reactivate}/reactivate?token=${encodeURIComponent(getToken())}`, {
+            method: 'POST',
+          });
+          const data = await res.json();
+          if (!data.ok) alert(data.message || 'No se pudo reactivar.');
+          loadStaff();
+        });
+      });
+    }
+
+    function resetForm() {
+      formTitle.textContent = '➕ Nuevo empleado';
+      staffIdInput.value = '';
+      staffNombreInput.value = '';
+      staffRolInput.value = '';
+      staffPinInput.value = '';
+      staffPinInput.placeholder = 'PIN de 4 digitos *';
+      staffTarifaInput.value = '';
+      staffStatus.hidden = true;
+    }
+
+    saveStaffBtn.addEventListener('click', async () => {
+      const id = staffIdInput.value;
+      const payload = {
+        token: getToken(),
+        nombre: staffNombreInput.value.trim(),
+        rol: staffRolInput.value.trim(),
+        tarifaPorHora: staffTarifaInput.value,
+      };
+      // El PIN solo se manda si se escribio algo (para no pisar el actual al editar).
+      if (staffPinInput.value.trim()) payload.pin = staffPinInput.value.trim();
+      if (!id) payload.pin = payload.pin || staffPinInput.value.trim(); // en alta, obligatorio
+
+      const url = id ? `/api/superadmin/staff/${id}` : '/api/superadmin/staff';
+      const method = id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (!data.ok) {
+        staffStatus.hidden = false;
+        staffStatus.textContent = data.message || 'No se pudo guardar.';
+        return;
+      }
+
+      resetForm();
+      loadStaff();
+    });
+
+    cancelStaffBtn.addEventListener('click', resetForm);
+    loadBtn.addEventListener('click', loadStaff);
+
+    const savedToken = sessionStorage.getItem('jukebox_superadmin_token');
+    if (savedToken) {
+      tokenInput.value = savedToken;
+      loadStaff();
+    }
+
+
+    async function loadAttendance() {
+    const res = await fetch(`/api/superadmin/attendance?token=${encodeURIComponent(getToken())}`);
+    if (!res.ok) return;
+    const shifts = await res.json();
+    renderAttendance(shifts);
+  }
+
+  function fmtDateTime(iso) {
+    if (!iso) return '-';
+    return new Date(iso).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+  }
+
+  function horasDeTurno(turno) {
+    if (!turno.salida) return '(en curso)';
+    const ms = new Date(turno.salida) - new Date(turno.entrada);
+    return (ms / 3600000).toFixed(2) + 'h';
+  }
+
+  function renderAttendance(shifts) {
+    const empleadosPorId = Object.fromEntries(currentStaff.map((s) => [s.id, s.nombre]));
+
+    const abiertos = shifts.filter((t) => !t.salida);
+    if (abiertos.length) {
+      openShiftsWarning.hidden = false;
+      openShiftsWarning.textContent = `⚠️ Hay ${abiertos.length} turno(s) sin fichar salida.`;
+    } else {
+      openShiftsWarning.hidden = true;
+    }
+
+    attendanceBody.innerHTML = shifts
+      .map(
+        (t) => `
+      <tr>
+        <td>${escapeHtml(empleadosPorId[t.empleadoId] || '(desconocido)')}</td>
+        <td>${fmtDateTime(t.entrada)}</td>
+        <td>${t.salida ? fmtDateTime(t.salida) : '<em>abierto</em>'}</td>
+        <td>${horasDeTurno(t)}</td>
+        <td>${t.origen}</td>
+        <td><button class="action secondary" data-edit-shift="${t.id}">Editar</button></td>
+      </tr>
+    `
+      )
+      .join('');
+
+    attendanceBody.querySelectorAll('[data-edit-shift]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const t = shifts.find((x) => x.id === Number(btn.dataset.editShift));
+        if (!t) return;
+        const nuevaSalida = prompt(
+          `Editar salida de ${empleadosPorId[t.empleadoId]}\n(formato: 2025-01-15T22:30, vacio para dejar abierto)`,
+          t.salida ? t.salida.slice(0, 16) : ''
+        );
+        if (nuevaSalida === null) return; // cancelo
+
+        const res = await fetch(`/api/superadmin/attendance/${t.id}?token=${encodeURIComponent(getToken())}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ salida: nuevaSalida || null }),
+        });
+        const data = await res.json();
+        if (!data.ok) { alert(data.message); return; }
+        loadAttendance();
+      });
+    });
+  }
+
+
+  //------ Payroll ----------
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function toDateInputValue(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+
+    function setQuincenaActual() {
+      const now = new Date();
+      let desde, hasta;
+      if (now.getDate() <= 15) {
+        desde = new Date(now.getFullYear(), now.getMonth(), 1);
+        hasta = new Date(now.getFullYear(), now.getMonth(), 15);
+      } else {
+        desde = new Date(now.getFullYear(), now.getMonth(), 16);
+        hasta = new Date(now.getFullYear(), now.getMonth() + 1, 0); // ultimo dia del mes
+      }
+      payrollDesde.value = toDateInputValue(desde);
+      payrollHasta.value = toDateInputValue(hasta);
+    }
+
+    function setQuincenaAnterior() {
+      const now = new Date();
+      let desde, hasta;
+      if (now.getDate() <= 15) {
+        const mesAnterior = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        desde = new Date(mesAnterior.getFullYear(), mesAnterior.getMonth(), 16);
+        hasta = new Date(now.getFullYear(), now.getMonth(), 0); // ultimo dia del mes pasado
+      } else {
+        desde = new Date(now.getFullYear(), now.getMonth(), 1);
+        hasta = new Date(now.getFullYear(), now.getMonth(), 15);
+      }
+      payrollDesde.value = toDateInputValue(desde);
+      payrollHasta.value = toDateInputValue(hasta);
+    }
+
+    document.getElementById('quincenaActualBtn').addEventListener('click', () => { setQuincenaActual(); calcularPayroll(); });
+    document.getElementById('quincenaAnteriorBtn').addEventListener('click', () => { setQuincenaAnterior(); calcularPayroll(); });
+    document.getElementById('calcularPayrollBtn').addEventListener('click', calcularPayroll);
+
+    async function calcularPayroll() {
+      if (!payrollDesde.value || !payrollHasta.value) {
+        alert('Elegi un rango de fechas.');
+        return;
+      }
+      const desdeIso = new Date(payrollDesde.value + 'T00:00:00').toISOString();
+      const hastaIso = new Date(payrollHasta.value + 'T23:59:59').toISOString();
+
+      const res = await fetch(
+        `/api/superadmin/payroll?token=${encodeURIComponent(getToken())}&desde=${encodeURIComponent(desdeIso)}&hasta=${encodeURIComponent(hastaIso)}`
+      );
+      const data = await res.json();
+      if (!data.ok) {
+        alert(data.message || 'No se pudo calcular.');
+        return;
+      }
+
+      lastPayrollRange = { desde: payrollDesde.value, hasta: payrollHasta.value };
+
+      const totalAbiertos = data.rows.reduce((sum, r) => sum + r.turnosAbiertos, 0);
+      payrollWarning.hidden = totalAbiertos === 0;
+      if (totalAbiertos > 0) {
+        payrollWarning.textContent = `⚠️ Hay ${totalAbiertos} turno(s) sin fichar salida en este rango — no se cuentan en las horas hasta que se cierren.`;
+      }
+
+      if (!data.rows.length) {
+        payrollBody.innerHTML = '<tr><td colspan="6" class="empty-state">Nadie ficho turnos en este rango.</td></tr>';
+      } else {
+        payrollBody.innerHTML = data.rows
+          .map(
+            (r) => `
+          <tr>
+            <td>${escapeHtml(r.nombre)}</td>
+            <td>${escapeHtml(r.rol || '-')}</td>
+            <td>$${Number(r.tarifaPorHora).toLocaleString()}</td>
+            <td>${r.turnos}${r.turnosAbiertos ? ` (${r.turnosAbiertos} abierto)` : ''}</td>
+            <td>${r.horas}h</td>
+            <td>$${r.total.toLocaleString()}</td>
+          </tr>
+        `
+          )
+          .join('');
+      }
+
+      exportCsvBtn.hidden = false;
+    }
+
+    exportCsvBtn.addEventListener('click', () => {
+      if (!lastPayrollRange) return;
+      const desdeIso = new Date(lastPayrollRange.desde + 'T00:00:00').toISOString();
+      const hastaIso = new Date(lastPayrollRange.hasta + 'T23:59:59').toISOString();
+      const url = `/api/superadmin/payroll/csv?token=${encodeURIComponent(getToken())}&desde=${encodeURIComponent(desdeIso)}&hasta=${encodeURIComponent(hastaIso)}`;
+      window.open(url, '_blank');
+    });
+
+  </script>
+</body>
+</html>

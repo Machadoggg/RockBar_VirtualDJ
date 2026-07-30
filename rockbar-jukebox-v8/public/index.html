@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>Jukebox</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <!-- Pantalla de bienvenida: nombre + sugerencia de seguir Instagram.
+       Se muestra hasta que el dispositivo tenga un nombre guardado para
+       esta noche (ver app.js). -->
+  <div id="gate" class="gate" hidden>
+    <div class="gate-card">
+      <h1 id="gateBarName">Jukebox</h1>
+      <p class="subtitle">Antes de elegir tu cancion...</p>
+
+      <label class="field-label" for="nicknameInput">¿Como te llamas?</label>
+      <input id="nicknameInput" type="text" placeholder="Tu nombre o apodo" maxlength="30" autocomplete="off" />
+      <p id="nicknameError" class="error-state" hidden>Escribi un nombre para continuar.</p>
+
+      <div class="ig-box">
+        <p>🤘 Seguinos en Instagram <strong id="gateIgHandle">@barracudabar</strong> y ganá un crédito extra para pedir mas canciones.</p>
+        <div class="ig-actions">
+          <a id="igLink" class="btn-secondary" href="#" target="_blank" rel="noopener">Abrir Instagram</a>
+          <button id="igClaimBtn" class="btn-secondary">Ya te sigo, sumar crédito</button>
+        </div>
+        <p id="igStatus" class="ig-status" hidden></p>
+      </div>
+
+      <button id="continueBtn" class="add-btn wide">Continuar</button>
+    </div>
+  </div>
+
+  <!-- App principal -->
+  <div id="mainApp" hidden>
+    <header class="topbar">
+      <!-- <img src="logo.png" class="brand-logo" id="vinylLogo" alt="Logo" />
+      <h1 id="barName">Jukebox</h1>
+      <p class="subtitle">Elegi tu cancion y sumala al Automix</p> -->
+
+      <div class="brand">
+        <img src="logo.png" class="brand-logo" id="vinylLogo" alt="Logo" />
+        <div class="brand-text">
+            <span class="brand-name" id="barName">El Bar</span>
+            <span class="brand-tag">Clasicos de rock</span>
+        </div>
+      </div>
+
+
+      <div class="badges">
+        <span class="remaining" id="remainingInfo">Cargando...</span>
+        <span class="credits-badge" id="creditsBadge" hidden>⭐ 0 creditos</span>
+      </div>
+
+      <div class="header-actions">
+        <button id="gamesBtn" class="btn-secondary small">🎮 Juegos</button>
+        <button id="promoBtn" class="btn-secondary small">🎉 Promociones</button>
+        <button id="igHeaderBtn" class="btn-secondary small">📸 Instagram</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="search-wrap">
+        <input id="searchInput" type="search" placeholder="Buscar por titulo o artista..." autocomplete="off" />
+      </div>
+
+      <ul id="songList" class="song-list"></ul>
+      <p id="emptyState" class="empty-state" hidden>No hay canciones que coincidan con tu busqueda.</p>
+      <p id="errorState" class="error-state" hidden></p>
+    </main>
+
+    <div id="toast" class="toast" hidden></div>
+  </div>
+
+  <!-- Modal de juegos: primero un menu (hub), cada juego es una vista aparte -->
+  <div id="gameModal" class="modal-overlay" hidden>
+    <div class="modal-card">
+      <button id="gameCloseBtn" class="modal-close">✕</button>
+
+      <!-- Vista: menu de juegos -->
+      <div id="gameHubView">
+        <h2>🎮 Juegos</h2>
+        <p class="subtitle">Jugá y sumá creditos para pedir mas canciones.</p>
+        <p id="hubCooldownMsg" class="empty-state" hidden></p>
+        <div class="game-hub-list">
+
+          <button class="game-hub-btn" data-game="wheel" hidden>
+            <span class="game-hub-emoji">🎡</span>
+            <span>Ruleta de creditos</span>
+          </button>
+
+          <button class="game-hub-btn" data-game="duck" hidden>
+            <span class="game-hub-emoji">🦆</span>
+            <span>Duck Hunt</span>
+          </button>
+
+          <button class="game-hub-btn" data-game="trivia" hidden>
+            <span class="game-hub-emoji">🎸</span>
+            <span>Trivia Rock</span>
+          </button>
+
+          <button class="game-hub-btn" data-game="duckhunt">
+            <span class="game-hub-emoji">🦆🔫</span>
+            <span>Duck Hunt Pro</span>
+          </button>
+          <button class="game-hub-btn" data-game="beerjump">
+            <span class="game-hub-emoji">🍺</span>
+            <span>Beer Jump</span>
+          </button>
+          <button class="game-hub-btn" data-game="othello">
+            <span class="game-hub-emoji">♟️</span>
+            <span>Othello</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Vista: Ruleta -->
+      <div id="gameWheelView" hidden>
+        <button class="game-back-btn" data-back>‹ Juegos</button>
+        <h2>Ruleta de creditos</h2>
+        <p class="subtitle">Gira y sumá creditos para pedir mas canciones.</p>
+
+        <div class="wheel-wrap">
+          <div id="wheel" class="wheel"></div>
+          <div class="wheel-pointer">▼</div>
+        </div>
+
+        <button id="spinBtn" class="add-btn wide">Girar</button>
+      </div>
+
+      <!-- Vista: Duck Hunt -->
+      <div id="gameDuckView" hidden>
+        <button class="game-back-btn" data-back>‹ Juegos</button>
+        <h2>🦆 Duck Hunt</h2>
+        <p class="subtitle">Tocá el pato 3 veces antes de que se te acabe el tiempo.</p>
+
+        <div class="duck-stats">
+          <span id="duckHits">Aciertos: 0 / 3</span>
+          <span id="duckTime">Tiempo: 8s</span>
+        </div>
+        <div id="duckArea" class="duck-area">
+          <button id="duckTarget" class="duck-target" hidden>🦆</button>
+        </div>
+
+        <button id="duckStartBtn" class="add-btn wide">Empezar</button>
+      </div>
+
+      <!-- Vista: Trivia Rock -->
+      <div id="gameTriviaView" hidden>
+        <button class="game-back-btn" data-back>‹ Juegos</button>
+        <h2>🎸 Trivia Rock</h2>
+        <p id="triviaQuestion" class="subtitle">Cargando pregunta...</p>
+        <div id="triviaOptions" class="trivia-options"></div>
+      </div>
+
+      <!-- Vista: Duck Hunt Pro -->
+      <div id="gameDuckHuntView" hidden>
+        <button class="game-back-btn" data-back>‹ Juegos</button>
+        <h2>🦆🔫 Duck Hunt Pro</h2>
+        <p class="subtitle">Jugá y cuando termines, reclamá tu crédito.</p>
+        <div class="iframe-game-wrap">
+          <iframe id="duckHuntFrame" src="" width="100%" height="360"
+            style="border:none;display:block;border-radius:10px;background:#000;"
+            allowfullscreen></iframe>
+        </div>
+        <button id="duckHuntClaimBtn" class="add-btn wide">Ya jugué, sumar crédito</button>
+      </div>
+
+      <!-- Vista: Beer Jump -->
+      <div id="gameBeerJumpView" hidden>
+        <button class="game-back-btn" data-back>‹ Juegos</button>
+        <h2>🍺 Beer Jump</h2>
+        <p class="subtitle">Espacio / Tap para saltar. Doble salto en el aire.</p>
+        <div class="iframe-game-wrap">
+          <iframe id="beerJumpFrame" src="" width="100%" height="360"
+            style="border:none;display:block;border-radius:10px;background:#1a0800;"
+            allowfullscreen></iframe>
+        </div>
+        <button id="beerJumpClaimBtn" class="add-btn wide">Ya jugué, sumar crédito</button>
+      </div>
+
+      <!-- Vista: Othello -->
+      <div id="gameOthelloView" hidden>
+        <button class="game-back-btn" data-back>‹ Juegos</button>
+        <h2>♟️ Othello</h2>
+        <p class="subtitle">Vencé a la máquina y reclamá tu crédito.</p>
+        <div class="iframe-game-wrap">
+          <iframe id="othelloFrame" src="" width="100%" height="420"
+            style="border:none;display:block;border-radius:10px;background:#094;"
+            allowfullscreen></iframe>
+        </div>
+        <button id="othelloClaimBtn" class="add-btn wide">Ya jugué, sumar crédito</button>
+      </div>
+
+      <!-- Comun a los 3 juegos -->
+      <p id="gameResult" class="ig-status" hidden></p>
+      <p id="gameCooldownMsg" class="empty-state" hidden></p>
+    </div>
+  </div>
+
+
+  <!-- Modal de promociones -->
+  <div id="promoModal" class="modal-overlay" hidden>
+    <div class="modal-card">
+      <button id="promoCloseBtn" class="modal-close">✕</button>
+      <h2>🎉 Promociones</h2>
+
+      <div class="promo-poster" id="promoPoster">
+        <div id="promoImageBg" class="promo-poster-bg"></div>
+        <div id="promoImageFg" class="promo-poster-fg"></div>
+      </div>
+
+      <div id="promoBadge" class="promo-badge" hidden></div>
+      <h3 id="promoTitle" class="promo-title"></h3>
+      <p id="promoDesc" class="promo-desc"></p>
+
+      <div id="promoDots" class="promo-dots"></div>
+      <p id="promoEmpty" class="empty-state" hidden>Todavia no hay promociones cargadas.</p>
+    </div>
+  </div>
+
+
+  <script src="/app.js"></script>
+</body>
+</html>

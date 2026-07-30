@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1">
+    <title>Othello Game</title>
+
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link href="ui.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <div id="container">
+      <div id="errors"><span></span></div>
+      <div id="game-header">
+          <span id="game-name">Othello</span>
+          <span id="tally-player1">0</span>
+          <span id="tally-player2">0</span>
+          <!--<a href="#pass" id="pass-button">Ceder Turn</a>-->
+          <button id="pass-button" onclick="location.hash='pass'">Ceder</button>
+          <br />
+          <span class="option">
+              <label>P1</label>
+              <div id="control-p1" class="switch">
+                  <span class="switch-slide">
+                      <span class="switch-slide-label-on">com</span>
+                      <span class="switch-slide-toggle"></span>
+                      <span class="switch-slide-label-off">play</span>
+                  </span>
+              </div>
+          </span>
+          <span class="option">
+              <label>P2</label>
+              <div id="control-p2" class="switch">
+                  <span class="switch-slide">
+                      <span class="switch-slide-label-on">com</span>
+                      <span class="switch-slide-toggle"></span>
+                      <span class="switch-slide-label-off">play</span>
+                  </span>
+              </div>
+          </span>
+          <div id="messages"></div>
+      </div>
+      <div id="game-container">
+        <div id="game-board"></div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+      GAME.Othello();
+    </script>
+
+    <script src="jquery.min.js"></script>
+    <script src="ui.js"></script>
+  </body>
+</html>

@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "title": "Cerveza",
+    "description": "Cerveza",
+    "imageUrl": "https://media.falabella.com/tottusCL/20457728_5/w=1500,h=1500,fit=cover",
+    "emoji": null,
+    "badge": "2x1",
+    "displayOrder": 2,
+    "isActive": true
+  },
+  {
+    "id": 2,
+    "title": "Ron",
+    "description": "Ron",
+    "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRABBq49EqTnPSOc1zHKZ9GVAbXR4vrtpywNz1xS0TjhA&s=10",
+    "emoji": null,
+    "badge": "2x1",
+    "displayOrder": 0,
+    "isActive": true
+  }
+]

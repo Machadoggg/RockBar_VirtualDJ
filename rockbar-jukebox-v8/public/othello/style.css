@@ -1,0 +1,315 @@
+body {
+  background-color: #F3F5F9;
+  margin: 20px;
+  font-family: Open Sans, Helvetica, Arial, sans-serif;
+  color: #353535;
+}
+
+#container {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+}
+
+#game-container {
+  perspective: 150em;
+  transform-style: preserve-3d;
+  max-width: 800px;
+}
+
+#game-header {
+  padding: 1em;
+  text-align: center;
+  position: relative;
+  background: #FFF;
+  margin: -20px;
+  box-shadow: 0 0 5px rgba(0,0,0,.05), 0 0 1px 1px rgba(0,0,0,.05)
+}
+
+#game-name {
+  position: absolute;
+  left: 1em;
+  font-weight: 100;
+  /* color: #d0a75f; */ /* TAN */
+  /* color: #45658f; */ /* BLUE */
+  color: #24a0ed; /* DARKER GREEN */
+}
+
+#tally-player1, #tally-player2 {
+  display: inline-block;
+  font-size: 100%;
+  font-weight: bold;
+  margin-left: 1em;
+  text-align: left;
+  width: 3.5em;
+}
+
+#tally-player1:before, #tally-player2:before {
+  content: "";
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 100%;
+  vertical-align: middle;
+  margin-right: .5em;
+}
+
+#tally-player1:before {
+  background-color: #222;
+}
+
+#tally-player2:before {
+  background-color: #FAFAFA;
+  box-shadow: inset 0 0 1px #CCC;
+}
+
+#pass-button {
+  color: #855;
+  font-weight: bold;
+  padding: 0.5em 1em;
+  position: absolute;
+  right: 0;
+  text-decoration: none;
+  text-transform: uppercase;
+  top: 0.5em;
+  /* border-radius: .25em;
+  border: 1px solid #CCC;*/
+  transition: all .25s ease-in-out 0s;
+}
+
+#pass-button:hover {
+  color: #C33;
+}
+
+#game-board {
+  border: 3px solid #666;
+  border-width: 1px 2px 3px;
+  display: inline-block;
+  clear: both;
+  width: 100%;
+  max-width: 800px;
+  /* box-shadow: 0 2px 5px rgba(0,0,0,.3); */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3), 0 150px 80px rgba(0, 0, 0, 0.3);
+  /*transform-origin: 0 100% 0;
+  transform: rotateX(20deg) rotateY(2deg) rotateZ(2deg);
+  transform: rotateX(30deg) rotateY(2deg) rotateZ(2deg) translateZ(-30em) translateY(-15em);*/
+  transform: rotateX(30deg) translateZ(200px) rotateY(2deg) rotateZ(2deg) translateY(100px) scale(.8);
+  transform-style: preserve-3d;
+  transform: all .35s ease-in-out 0s;
+  margin-top: 0;
+}
+
+.square {
+  /* background-color: #45658f; */
+  background-color: #094;
+  box-shadow: inset 0px 0px 0px 1px #333;
+  width: 12.5%;
+  padding-top: 12.5%;
+  height: 0;
+  float: left;
+  position: relative;
+  transition: all .15s ease-out 0s;
+  /*transform-style: preserve-3d;*/ /* Can't do this, breaks click areas */
+}
+
+.square.first {
+  clear: left;
+}
+
+.square.odd {
+  /* background-color: #d0a75f; */
+  background-color: #3b3;
+}
+
+.square.highlight:hover {
+  /*box-shadow: 0 0 20px rgba(0, 0, 0, .5) inset, 0 0 5px rgba(0, 0, 0, .5) inset, 0 0 40px rgba(0, 0, 0, .5) inset;*/
+  box-shadow: inset 0px 0px 0px 1px #333, 0 0 20px rgba(0, 0, 0, 0.6) inset;
+  /*transform: translate3d(0, 0, .5em);*/
+}
+
+.square.odd.highlight:hover {
+  box-shadow: inset 0px 0px 0px 1px #333, 0 0 20px rgba(0, 0, 0, 0.75) inset;
+}
+
+/*.square.highlight::before {
+  background-color: #45658f;
+  box-shadow: inset 0 0 100px rgba(0,0,0,.75);
+  content: "";
+  display: block;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  transform: rotateX(-266deg);
+  transform-origin: 0 100% 0;
+  width: 100%;
+  z-index: -1;
+}
+
+.square.odd.highlight::before {
+  background-color: #d0a75f;
+}*/
+
+.piece {
+  position: absolute;
+  top: 15%;
+  left: 15%;
+  border-radius: 100%;
+  width: 70%;
+  padding-top: 70%;
+  height: 0;
+  display: inline-block;
+  box-shadow: 1px 2px 1px rgba(0, 0, 0, 0.35), -1px -2px 4px rgba(0, 0, 0, 0.35) inset;
+  transition: all .3s ease-in-out 0s;
+  opacity: 1;
+  transform: translateY(-1000%) scale(2);
+  transition: all .35s ease-out 0s;
+  margin-top: -.2em;
+  opacity: .5;
+}
+
+.piece.placed {
+  transform: translateY(0%) scale(1);
+  opacity: 1;
+}
+
+.piece::after {
+  /*content: "";*/ /* remove for now */
+  position: absolute;
+  width: 80%;
+  height: 80%;
+  top: 10%;
+  left: 10%;
+  background-color: rgba(0,0,0,.1);
+  box-shadow: 0 0 20px 0 rgba(0,0,0,.6);
+  border-radius: 100%;
+  transform: translateY(500%);
+  transition: all .35s ease-out 0s;
+  z-index: -1;
+}
+
+.piece.placed::after {
+  background-color: rgba(0,0,0,.6);
+  box-shadow: 0 0 0 10px rgba(0,0,0,.6);
+  transform: scale(.8) translateY(0%);
+}
+
+.piece.player1 {
+  background-color: #242424;
+  border-bottom: .2em solid #AAA;
+}
+
+.piece.player2 {
+  background-color: #F3F3F3;
+  border-bottom: .2em solid #111;
+}
+
+#messages {
+  color: #999;
+  font-size: 90%;
+  left: 0;
+  padding-top: 1em;
+  position: absolute;
+  text-align: center;
+  text-shadow: 0 1px #fff;
+  top: 100%;
+  width: 100%;
+}
+
+#messages span {
+  position: absolute;
+  width: 100%;
+  display: block;
+  opacity: 0;
+  transition: all .35s ease-in 0s;
+}
+
+#messages span.fadein {
+  opacity: 1;
+}
+
+#messages span.error {
+  color: #C33;
+}
+
+#errors {
+  left: 0;
+  position: fixed;
+  right: 0;
+  text-align: center;
+  bottom: 0;
+  z-index: 10;
+}
+
+#errors span {
+  background-color: #fcc;
+  color: #c33;
+  font-size: 100%;
+  padding: 1.2em;
+  transition: all 0.35s ease-in 0s;
+  display: block;
+  box-sizing: border-box;
+  position: absolute;
+  width: 100%;
+  bottom: -5em;
+  /* opacity: 0; */
+}
+
+#errors span.fadein {
+  opacity: 1;
+  bottom: 0em;
+  transition: all 0.15s ease-out 0s;
+}
+
+
+@media screen and (max-width: 600px) {
+  #game-board {
+    margin-top: 0;
+  }
+}
+
+@media screen and (min-width: 1000px) {
+  #game-header {
+    width: 20%;
+    float: right;
+    margin-right: 7%;
+    margin-top: 22%;
+  }
+
+  #game-name {
+    left: 0;
+    bottom: 100%;
+    width: 100%;
+    margin-bottom: 1em;
+    font-size: 200%;
+  }
+
+  #pass-button {
+    border-top: 1px solid #EEE;
+    display: inline-block;
+    margin-top: 1em;
+    padding-bottom: 0.25em;
+    padding-top: 0.75em;
+    position: static;
+  }
+
+  #game-container {
+    width: 66%;
+    float: left;
+  }
+
+  #errors {
+    top: 0;
+    bottom: auto;
+  }
+
+  #errors span {
+    bottom: auto;
+    top: -5em;
+  }
+
+  #errors span.fadein {
+    bottom: auto;
+    opacity: 1;
+    top: 0;
+  }
+}

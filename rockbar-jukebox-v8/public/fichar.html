@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fichar — Rockbar</title>
+<link rel="stylesheet" href="/style.css" />
+<style>
+  body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  main { max-width: 380px; width: 100%; text-align: center; }
+  .pin-display {
+    font-size: 2.4rem; letter-spacing: 0.4em; margin: 20px 0;
+    background: var(--bg-card); border-radius: 12px; padding: 16px;
+    border: 1px solid var(--border); min-height: 1.4em;
+  }
+  .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .keypad button {
+    font-size: 1.6rem; padding: 18px 0; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--bg-card); color: var(--text); cursor: pointer;
+  }
+  .keypad button:active { background: var(--red); }
+  .keypad .wide { grid-column: span 1; }
+  .result { margin-top: 18px; font-size: 1.1rem; min-height: 2.4em; }
+  .result.entrada { color: #4caf50; }
+  .result.salida { color: #e8b23d; }
+  .result.error { color: #c81e3a; }
+</style>
+</head>
+<body>
+  <main>
+    <header class="topbar" style="background:none; box-shadow:none;">
+      <h1>🕐 Fichar</h1>
+      <p class="subtitle">Ingresa tu PIN de 4 digitos</p>
+    </header>
+
+    <div class="pin-display" id="pinDisplay">••••</div>
+
+    <div class="keypad">
+      <button data-key="1">1</button>
+      <button data-key="2">2</button>
+      <button data-key="3">3</button>
+      <button data-key="4">4</button>
+      <button data-key="5">5</button>
+      <button data-key="6">6</button>
+      <button data-key="7">7</button>
+      <button data-key="8">8</button>
+      <button data-key="9">9</button>
+      <button data-key="borrar" class="secondary">⌫</button>
+      <button data-key="0">0</button>
+      <button data-key="ok" class="action">✓</button>
+    </div>
+
+    <p id="result" class="result"></p>
+  </main>
+
+  <script>
+    const pinDisplay = document.getElementById('pinDisplay');
+    const resultEl = document.getElementById('result');
+    let pin = '';
+
+    function renderPin() {
+      pinDisplay.textContent = pin.padEnd(4, '•').split('').join(' ');
+    }
+
+    async function submitPin() {
+      if (pin.length !== 4) return;
+      const res = await fetch('/api/staff/clock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin }),
+      });
+      const data = await res.json();
+
+      if (!data.ok) {
+        resultEl.className = 'result error';
+        resultEl.textContent = data.message || 'No se pudo fichar.';
+      } else if (data.tipo === 'entrada') {
+        resultEl.className = 'result entrada';
+        resultEl.textContent = `👋 Bienvenido, ${data.empleado}! Entrada registrada.`;
+      } else {
+        resultEl.className = 'result salida';
+        resultEl.textContent = `👋 Hasta luego, ${data.empleado}! Salida registrada.`;
+      }
+
+      pin = '';
+      renderPin();
+      setTimeout(() => { resultEl.textContent = ''; }, 4000);
+    }
+
+    document.querySelectorAll('.keypad button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.key;
+        if (key === 'borrar') {
+          pin = pin.slice(0, -1);
+          renderPin();
+        } else if (key === 'ok') {
+          submitPin();
+        } else if (pin.length < 4) {
+          pin += key;
+          renderPin();
+          if (pin.length === 4) submitPin();
+        }
+      });
+    });
+
+    renderPin();
+  </script>
+</body>
+</html>

@@ -1,0 +1,549 @@
+:root {
+  --bg: #0d0d0f;
+  --bg-card: #1a1a1e;
+  --red: #d61f26;
+  --red-dark: #8f1418;
+  --text: #f2f2f2;
+  --text-dim: #a8a8ad;
+  --border: #2a2a2f;
+}
+
+* { box-sizing: border-box; }
+
+/* El atributo [hidden] tiene que ganarle siempre a cualquier "display"
+   definido en una clase (ej: .gate, .modal-overlay usan display:flex para
+   cuando SI se muestran). Sin este !important, un elemento con hidden y
+   una clase que fija display queda visible igual. */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  min-height: 100vh;
+}
+
+.topbar {
+  text-align: center;
+  padding: 28px 16px 18px;
+  background: linear-gradient(180deg, var(--red-dark), var(--bg) 90%);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar h1 {
+  margin: 0 0 4px;
+  font-size: 1.6rem;
+  letter-spacing: 0.5px;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.remaining {
+  margin: 10px auto 0;
+  display: inline-block;
+  background: rgba(214, 31, 38, 0.15);
+  border: 1px solid var(--red);
+  color: var(--text);
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.search-wrap {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  padding: 8px 0 14px;
+  z-index: 5;
+}
+
+#searchInput {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+#searchInput:focus {
+  outline: none;
+  border-color: var(--red);
+}
+
+.song-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.song-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.song-info { min-width: 0; }
+
+.song-title {
+  font-weight: 600;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.song-artist {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.add-btn {
+  flex: none;
+  background: var(--red);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-btn:disabled {
+  background: #4a4a4d;
+  cursor: not-allowed;
+}
+
+.add-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.empty-state, .error-state {
+  text-align: center;
+  color: var(--text-dim);
+  margin-top: 30px;
+}
+
+.error-state { color: var(--red); }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--red);
+  color: var(--text);
+  padding: 12px 18px;
+  border-radius: 10px;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  z-index: 20;
+}
+
+/* ---------- Pantalla de bienvenida (gate) ---------- */
+
+.gate {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, var(--red-dark), var(--bg) 75%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 30;
+  overflow-y: auto;
+}
+
+.gate-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 26px 22px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+
+.gate-card h1 { margin: 0 0 6px; font-size: 1.5rem; }
+
+.field-label {
+  display: block;
+  text-align: left;
+  margin: 18px 0 6px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+#nicknameInput {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+#nicknameInput:focus { outline: none; border-color: var(--red); }
+
+.ig-box {
+  margin-top: 20px;
+  padding: 14px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.ig-box p { margin: 0 0 10px; font-size: 0.88rem; }
+
+.ig-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.ig-status {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  color: #6fd67a;
+}
+
+.btn-secondary {
+  flex: 1;
+  min-width: 140px;
+  text-align: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-secondary.small { flex: none; min-width: 0; padding: 8px 12px; font-size: 0.8rem; }
+
+.add-btn.wide { width: 100%; margin-top: 18px; padding: 13px; font-size: 1rem; }
+
+.add-btn.queued { background: #2f6d3a; color: #d9f2dc; cursor: default; }
+
+/* ---------- Header: badges y acciones ---------- */
+
+.badges {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.credits-badge {
+  display: inline-block;
+  background: rgba(255, 200, 0, 0.12);
+  border: 1px solid #d6a71f;
+  color: #ffd35c;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.header-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* ---------- Modal del juego ---------- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 40;
+}
+
+.modal-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 20px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.wheel-wrap {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 20px auto;
+}
+
+.wheel {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4px solid var(--red);
+  background: conic-gradient(
+    var(--red) 0deg 60deg,
+    var(--bg) 60deg 120deg,
+    var(--red) 120deg 180deg,
+    var(--bg) 180deg 240deg,
+    var(--red) 240deg 300deg,
+    var(--bg) 300deg 360deg
+  );
+  transition: transform 1.4s cubic-bezier(0.15, 0.75, 0.25, 1);
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ffd35c;
+  font-size: 1.4rem;
+}
+
+/* ---------- Hub de juegos ---------- */
+
+.game-hub-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.game-hub-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.game-hub-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.game-hub-btn:active:not(:disabled) { transform: scale(0.98); }
+
+.game-hub-emoji { font-size: 1.5rem; }
+
+.game-back-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* ---------- Duck Hunt ---------- */
+
+.duck-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin: 10px 0 6px;
+}
+
+.duck-area {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background: linear-gradient(180deg, #16161a, var(--bg));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.duck-target {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  border: none;
+  background: none;
+  font-size: 2rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: left 0.15s linear, top 0.15s linear;
+}
+
+/* ---------- Trivia Rock ---------- */
+
+.trivia-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.trivia-option-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.trivia-option-btn:disabled { cursor: not-allowed; }
+
+.trivia-option-btn.correct { border-color: #6fd67a; background: rgba(111, 214, 122, 0.12); }
+.trivia-option-btn.wrong { border-color: var(--red); background: rgba(214, 31, 38, 0.12); }
+
+
+.promo-poster {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  margin: 12px 0;
+}
+.promo-poster-bg {
+  position: absolute;
+  inset: -14px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(20px) brightness(.55);
+  transform: scale(1.15);
+}
+.promo-poster-fg {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  font-size: 3.5rem;
+}
+.promo-badge {
+  display: inline-block;
+  background: var(--red);
+  color: #fff;
+  font-size: .78rem;
+  padding: 3px 12px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.promo-title { font-size: 1.3rem; color: var(--text); margin-bottom: 6px; }
+.promo-desc { color: var(--text-dim); font-size: .92rem; line-height: 1.5; margin-bottom: 10px; }
+.promo-dots { display: flex; justify-content: center; gap: 6px; }
+.promo-dot { width: 8px; height: 8px; border-radius: 50%; border: none; background: var(--border); cursor: pointer; padding: 0; }
+.promo-dot.active { background: var(--red); }
+
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  min-width: 0;
+  margin-top: -20px;
+}
+
+.brand-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--amp-red);
+  box-shadow: 0 0 0 3px var(--stage-black), 0 0 20px rgba(200,30,58,.4);
+  animation: spin 9s linear infinite;
+  transition: transform 0.3s ease;
+}
+
+  .brand-logo:hover {
+      animation-duration: 3s;
+  }
+
+@keyframes spin {
+  to {
+      transform: rotate(360deg);
+  }
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.brand-name {
+  font-family: var(--f-display);
+  font-size: 1.5rem;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--bone);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand-tag {
+  font-family: var(--f-marker);
+  font-size: .9rem;
+  color: var(--amp-red);
+  letter-spacing: .03em;
+}

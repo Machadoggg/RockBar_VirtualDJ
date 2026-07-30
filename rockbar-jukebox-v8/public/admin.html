@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Jukebox - Admin</title>
+<link rel="stylesheet" href="/style.css" />
+<style>
+  main { max-width: 800px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  th { color: var(--text-dim); font-weight: 600; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+  input[type="password"], input[type="text"] {
+    padding: 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg-card); color: var(--text);
+  }
+  button.action {
+    background: var(--red); color: white; border: none; border-radius: 8px;
+    padding: 10px 14px; cursor: pointer; font-weight: 600;
+  }
+  button.secondary { background: var(--bg-card); border: 1px solid var(--border); color: var(--text); }
+  .qr-box { text-align: center; margin-top: 20px; }
+  .qr-box img { max-width: 260px; width: 100%; border-radius: 12px; background: white; padding: 10px; }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>🎛 Panel del DJ</h1>
+    <p class="subtitle">Pedidos de la noche y codigo QR</p>
+  </header>
+
+  <main>
+    <div class="row">
+      <input id="tokenInput" type="password" placeholder="Token de administrador" />
+      <button class="action" id="loadBtn">Entrar</button>
+    </div>
+
+    <div id="content" hidden>
+      <h2 style="margin-top:30px;">📢 Pedidos / canciones</h2>
+      <div class="row">
+        <button class="action" id="resetAllBtn">Resetear TODOS los contadores de hoy</button>
+        <button class="action" id="wipeAllBtn" style="background:#8b0000;">🗑️ Borrar TODOS los registros (fin de noche)</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Nombre</th><th>Dispositivo</th><th>IP</th><th>Pedidos</th><th>Creditos</th><th>Instagram</th><th>Ultimo pedido</th><th></th></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+
+      <div id="adsSection" hidden>
+        <h2 style="margin-top:30px;">📢 Publicidad / promociones</h2>
+      
+        <div id="adsListWrap"></div>
+      
+        <div class="row" style="flex-direction:column; align-items:stretch; max-width:420px;">
+          <input type="hidden" id="adId" />
+          <input id="adTitle" type="text" placeholder="Titulo *" />
+          <input id="adDesc" type="text" placeholder="Descripcion" />
+          <input id="adImage" type="text" placeholder="URL de imagen (opcional)" />
+          <input id="adEmoji" type="text" placeholder="Emoji si no hay imagen (ej: 🍺)" maxlength="4" />
+          <input id="adBadge" type="text" placeholder="Etiqueta (ej: 2x1, Nuevo)" />
+          <input id="adOrder" type="text" placeholder="Orden (numero, menor = primero)" value="0" />
+          <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem;">
+            <input type="checkbox" id="adActive" checked style="width:auto;" />
+            Mostrar a los clientes
+          </label>
+          <div class="row" style="margin-top:6px;">
+            <button class="action" id="saveAdBtn">Guardar anuncio</button>
+            <button class="action secondary" id="cancelAdBtn">Cancelar</button>
+          </div>
+          <p id="adStatus" class="error-state" hidden></p>
+        </div>
+      </div>
+
+      <div class="qr-box">
+        <p>Codigo QR para imprimir en las mesas:</p>
+        <img id="qrImg" src="/qr.png" alt="QR" />
+      </div>
+    </div>
+
+    <p id="msg" class="error-state" hidden></p>
+  </main>
+
+  <script>
+    const tokenInput = document.getElementById('tokenInput');
+    const loadBtn = document.getElementById('loadBtn');
+    const content = document.getElementById('content');
+    const tableBody = document.getElementById('tableBody');
+    const msg = document.getElementById('msg');
+    const resetAllBtn = document.getElementById('resetAllBtn');
+
+    const adsSection = document.getElementById('adsSection');
+    const adsListWrap = document.getElementById('adsListWrap');
+    const adIdInput = document.getElementById('adId');
+    const adTitleInput = document.getElementById('adTitle');
+    const adDescInput = document.getElementById('adDesc');
+    const adImageInput = document.getElementById('adImage');
+    const adEmojiInput = document.getElementById('adEmoji');
+    const adBadgeInput = document.getElementById('adBadge');
+    const adOrderInput = document.getElementById('adOrder');
+    const adActiveInput = document.getElementById('adActive');
+    const saveAdBtn = document.getElementById('saveAdBtn');
+    const cancelAdBtn = document.getElementById('cancelAdBtn');
+    const adStatus = document.getElementById('adStatus');
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function getToken() {
+      return tokenInput.value.trim() || localStorage.getItem('jukebox_admin_token') || '';
+    }
+
+    let refreshTimer = null;
+    const AUTO_REFRESH_MS = 10000;
+
+    function stopAutoRefresh() {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+
+    function startAutoRefresh() {
+      if (refreshTimer) return;
+      refreshTimer = setInterval(loadSummary, AUTO_REFRESH_MS);
+    }
+
+    async function loadSummary() {
+      const token = getToken();
+      if (!token) return;
+      localStorage.setItem('jukebox_admin_token', token);
+
+      const res = await fetch(`/api/admin/summary?token=${encodeURIComponent(token)}`);
+      if (!res.ok) {
+        msg.hidden = false;
+        msg.textContent = 'Token invalido.';
+        content.hidden = true;
+        stopAutoRefresh();
+        return;
+      }
+      msg.hidden = true;
+      content.hidden = false;
+      startAutoRefresh();
+      const data = await res.json();
+
+      tableBody.innerHTML = '';
+      for (const d of data.devices) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${d.nickname ? escapeHtml(d.nickname) : '<em>(sin nombre)</em>'}</td>
+          <td>${d.deviceId.slice(0, 8)}...</td>
+          <td>${d.ip || '-'}</td>
+          <td>${d.count} (limite base: ${data.requestsPerWindow} c/${data.requestWindowMinutes}min)</td>
+          <td>${d.credits}</td>
+          <td>${d.instagramClaimed ? '✓' : '-'}</td>
+          <td>${d.lastRequestAt ? new Date(d.lastRequestAt).toLocaleTimeString() : '-'}</td>
+          <td><button class="action secondary" data-device="${d.deviceId}">Resetear</button></td>
+        `;
+        tableBody.appendChild(tr);
+      }
+
+      tableBody.querySelectorAll('button[data-device]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          await fetch('/api/admin/reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: getToken(), deviceId: btn.dataset.device }),
+          });
+          loadSummary();
+        });
+      });
+      loadAds(); // ← agregar esta linea al final de loadSummary
+    }
+
+
+
+      async function loadAds() {
+      const token = getToken();
+      if (!token) return;
+      const res = await fetch(`/api/admin/ads?token=${encodeURIComponent(token)}`);
+      if (!res.ok) return;
+      const list = await res.json();
+      renderAdsList(list);
+      adsSection.hidden = false;
+    }
+
+    function renderAdsList(list) {
+      if (!list.length) {
+        adsListWrap.innerHTML = '<p class="empty-state">Todavia no hay anuncios cargados.</p>';
+        return;
+      }
+      adsListWrap.innerHTML = list
+        .map(
+          (ad) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border); border-radius:8px; padding:10px 14px; margin-bottom:8px; ${ad.isActive ? '' : 'opacity:.5;'}">
+          <div>
+            <strong>${escapeHtml(ad.emoji || '🍺')} ${escapeHtml(ad.title)}</strong>
+            ${ad.badge ? ` <span style="font-size:.7rem; background:var(--red); color:white; padding:2px 8px; border-radius:12px;">${escapeHtml(ad.badge)}</span>` : ''}
+            <div style="color:var(--text-dim); font-size:.85rem;">${escapeHtml(ad.description || '')}</div>
+            <div style="color:var(--text-dim); font-size:.75rem;">${ad.isActive ? 'Activo' : 'Oculto'} · orden ${ad.displayOrder}</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="action secondary" data-edit-ad="${ad.id}">Editar</button>
+            <button class="action secondary" data-delete-ad="${ad.id}">Eliminar</button>
+          </div>
+        </div>
+      `
+        )
+        .join('');
+
+      adsListWrap.querySelectorAll('[data-edit-ad]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const ad = list.find((a) => a.id === Number(btn.dataset.editAd));
+          if (!ad) return;
+          adIdInput.value = ad.id;
+          adTitleInput.value = ad.title || '';
+          adDescInput.value = ad.description || '';
+          adImageInput.value = ad.imageUrl || '';
+          adEmojiInput.value = ad.emoji || '';
+          adBadgeInput.value = ad.badge || '';
+          adOrderInput.value = ad.displayOrder ?? 0;
+          adActiveInput.checked = !!ad.isActive;
+          adTitleInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      });
+
+      adsListWrap.querySelectorAll('[data-delete-ad]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('¿Eliminar este anuncio?')) return;
+          const token = getToken();
+          await fetch(`/api/admin/ads/${btn.dataset.deleteAd}?token=${encodeURIComponent(token)}`, {
+            method: 'DELETE',
+          });
+          loadAds();
+        });
+      });
+    }
+
+    function resetAdForm() {
+      adIdInput.value = '';
+      adTitleInput.value = '';
+      adDescInput.value = '';
+      adImageInput.value = '';
+      adEmojiInput.value = '';
+      adBadgeInput.value = '';
+      adOrderInput.value = 0;
+      adActiveInput.checked = true;
+      adStatus.hidden = true;
+    }
+
+    saveAdBtn.addEventListener('click', async () => {
+      const title = adTitleInput.value.trim();
+      if (!title) {
+        adStatus.hidden = false;
+        adStatus.textContent = 'El titulo es obligatorio.';
+        return;
+      }
+
+      const id = adIdInput.value;
+      const payload = {
+        token: getToken(),
+        title,
+        description: adDescInput.value.trim() || null,
+        imageUrl: adImageInput.value.trim() || null,
+        emoji: adEmojiInput.value.trim() || null,
+        badge: adBadgeInput.value.trim() || null,
+        displayOrder: parseInt(adOrderInput.value || '0', 10),
+        isActive: adActiveInput.checked,
+      };
+
+      const url = id ? `/api/admin/ads/${id}` : '/api/admin/ads';
+      const method = id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        resetAdForm();
+        loadAds();
+      } else {
+        adStatus.hidden = false;
+        adStatus.textContent = 'No se pudo guardar el anuncio.';
+      }
+    });
+
+    cancelAdBtn.addEventListener('click', resetAdForm);
+
+    
+
+    loadBtn.addEventListener('click', loadSummary);
+
+    resetAllBtn.addEventListener('click', async () => {
+      await fetch('/api/admin/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: getToken() }),
+      });
+      loadSummary();
+    });
+
+
+    const wipeAllBtn = document.getElementById('wipeAllBtn');
+
+    wipeAllBtn.addEventListener('click', async () => {
+      const sure = confirm(
+        'Esto borra TODO: nombres, pedidos, creditos e Instagram de todos los clientes de hoy.\n\n' +
+        'Usalo solo al cerrar el bar. ¿Continuar?'
+      );
+      if (!sure) return;
+
+      const reallySure = confirm('Ultima confirmacion: esta accion no se puede deshacer. ¿Borrar todo?');
+      if (!reallySure) return;
+
+      await fetch('/api/admin/wipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: getToken() }),
+      });
+      loadSummary();
+    });
+
+
+    const savedToken = localStorage.getItem('jukebox_admin_token');
+    if (savedToken) {
+      tokenInput.value = savedToken;
+      loadSummary();
+    }
+  </script>
+</body>
+</html>
