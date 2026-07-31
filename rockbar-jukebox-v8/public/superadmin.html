@@ -259,13 +259,72 @@
         <div id="openShiftsWarning" class="error-state" hidden style="margin-bottom:14px;"></div>
 
         <div class="panel">
+          <h3>⬇️ Exportar reporte</h3>
+          <div class="row">
+            <div>
+              <label class="field-label">Desde (opcional)</label>
+              <input type="date" id="attendanceExportDesde" />
+            </div>
+            <div>
+              <label class="field-label">Hasta (opcional)</label>
+              <input type="date" id="attendanceExportHasta" />
+            </div>
+            <button class="action" id="attendanceExportBtn" style="align-self:flex-end;">⬇️ Exportar CSV</button>
+          </div>
+          <p style="color:var(--text-dim); font-size:0.8rem; margin-top:10px;">
+            Si dejas las fechas vacias, se exporta lo que este visible con los filtros de arriba.
+            Si elegis un rango de fechas, se exporta ESE periodo completo, sin importar los demas filtros.
+          </p>
+        </div>
+
+        <div class="panel">
+          <h3>🔍 Filtros</h3>
+          <div class="row" style="margin-bottom:12px;">
+            <div style="flex:1; min-width:200px;">
+              <label class="field-label">Buscar (empleado, origen, notas...)</label>
+              <input type="text" id="attendanceSearch" placeholder="Escribi para filtrar..." style="width:100%;" />
+            </div>
+            <div>
+              <label class="field-label">Empleado</label>
+              <select id="attendanceEmpleadoFilter" style="padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:0.9rem;">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Origen</label>
+              <select id="attendanceOrigenFilter" style="padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:0.9rem;">
+                <option value="">Todos</option>
+                <option value="kiosco">Kiosco</option>
+                <option value="manual">Manual</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Estado</label>
+              <select id="attendanceEstadoFilter" style="padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:0.9rem;">
+                <option value="">Todos</option>
+                <option value="abierto">Abiertos</option>
+                <option value="cerrado">Cerrados</option>
+              </select>
+            </div>
+            <button class="secondary" id="attendanceClearFiltersBtn" style="align-self:flex-end;">Limpiar filtros</button>
+          </div>
+
           <table>
             <thead>
-              <tr><th>Empleado</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Origen</th><th></th></tr>
+              <tr>
+                <th data-sort="empleado" style="cursor:pointer;">Empleado ⇅</th>
+                <th data-sort="entrada" style="cursor:pointer;">Entrada ⇅</th>
+                <th data-sort="salida" style="cursor:pointer;">Salida ⇅</th>
+                <th data-sort="horas" style="cursor:pointer;">Horas ⇅</th>
+                <th data-sort="origen" style="cursor:pointer;">Origen ⇅</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody id="attendanceBody"></tbody>
           </table>
+          <p id="attendanceCount" style="color:var(--text-dim); font-size:0.8rem; margin-top:10px;"></p>
         </div>
+
       </section>
 
       <!-- ---------- NOMINA ---------- -->
@@ -506,12 +565,39 @@
 
     cancelStaffBtn.addEventListener('click', resetForm);
 
+
     // ============ Attendance ============
+    const attendanceSearch = document.getElementById('attendanceSearch');
+    const attendanceEmpleadoFilter = document.getElementById('attendanceEmpleadoFilter');
+    const attendanceOrigenFilter = document.getElementById('attendanceOrigenFilter');
+    const attendanceEstadoFilter = document.getElementById('attendanceEstadoFilter');
+    const attendanceClearFiltersBtn = document.getElementById('attendanceClearFiltersBtn');
+    const attendanceCount = document.getElementById('attendanceCount');
+    const attendanceExportDesde = document.getElementById('attendanceExportDesde');
+    const attendanceExportHasta = document.getElementById('attendanceExportHasta');
+    const attendanceExportBtn = document.getElementById('attendanceExportBtn');
+
+    let attendanceSort = { key: 'entrada', dir: 'desc' };
+
     async function loadAttendance() {
       const res = await fetch(`/api/superadmin/attendance?token=${encodeURIComponent(getToken())}`);
       if (!res.ok) return;
       currentShifts = await res.json();
-      renderAttendance(currentShifts);
+      populateEmpleadoFilter();
+      renderAttendanceFiltered();
+    }
+
+    function populateEmpleadoFilter() {
+      const seleccionActual = attendanceEmpleadoFilter.value;
+      const empleadosPorId = Object.fromEntries(currentStaff.map((s) => [s.id, s.nombre]));
+      const idsConTurnos = [...new Set(currentShifts.map((t) => t.empleadoId))];
+
+      attendanceEmpleadoFilter.innerHTML = '<option value="">Todos</option>' +
+        idsConTurnos
+          .map((id) => `<option value="${id}">${escapeHtml(empleadosPorId[id] || '(desconocido)')}</option>`)
+          .join('');
+
+      attendanceEmpleadoFilter.value = seleccionActual;
     }
 
     function fmtDateTime(iso) {
@@ -519,25 +605,93 @@
       return new Date(iso).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
     }
 
+    function horasDeTurnoNum(turno) {
+      if (!turno.salida) return null;
+      return (new Date(turno.salida) - new Date(turno.entrada)) / 3600000;
+    }
+
     function horasDeTurno(turno) {
-      if (!turno.salida) return '(en curso)';
-      const ms = new Date(turno.salida) - new Date(turno.entrada);
-      return (ms / 3600000).toFixed(2) + 'h';
+      const h = horasDeTurnoNum(turno);
+      return h === null ? '(en curso)' : h.toFixed(2) + 'h';
+    }
+
+    function getFilteredShifts() {
+      const empleadosPorId = Object.fromEntries(currentStaff.map((s) => [s.id, s.nombre]));
+      const texto = attendanceSearch.value.trim().toLowerCase();
+      const empleadoSel = attendanceEmpleadoFilter.value;
+      const origenSel = attendanceOrigenFilter.value;
+      const estadoSel = attendanceEstadoFilter.value;
+
+      let list = currentShifts.filter((t) => {
+        if (empleadoSel && String(t.empleadoId) !== empleadoSel) return false;
+        if (origenSel && t.origen !== origenSel) return false;
+        if (estadoSel === 'abierto' && t.salida) return false;
+        if (estadoSel === 'cerrado' && !t.salida) return false;
+
+        if (texto) {
+          const nombre = (empleadosPorId[t.empleadoId] || '').toLowerCase();
+          const haystack = [
+            nombre,
+            t.origen || '',
+            t.notas || '',
+            fmtDateTime(t.entrada),
+            t.salida ? fmtDateTime(t.salida) : 'abierto',
+          ].join(' ').toLowerCase();
+          if (!haystack.includes(texto)) return false;
+        }
+
+        return true;
+      });
+
+      list.sort((a, b) => {
+        let va, vb;
+        switch (attendanceSort.key) {
+          case 'empleado':
+            va = (empleadosPorId[a.empleadoId] || ''); vb = (empleadosPorId[b.empleadoId] || '');
+            break;
+          case 'entrada':
+            va = new Date(a.entrada).getTime(); vb = new Date(b.entrada).getTime();
+            break;
+          case 'salida':
+            va = a.salida ? new Date(a.salida).getTime() : -Infinity;
+            vb = b.salida ? new Date(b.salida).getTime() : -Infinity;
+            break;
+          case 'horas':
+            va = horasDeTurnoNum(a) ?? -1; vb = horasDeTurnoNum(b) ?? -1;
+            break;
+          case 'origen':
+            va = a.origen || ''; vb = b.origen || '';
+            break;
+          default:
+            va = a.id; vb = b.id;
+        }
+        if (va < vb) return attendanceSort.dir === 'asc' ? -1 : 1;
+        if (va > vb) return attendanceSort.dir === 'asc' ? 1 : -1;
+        return 0;
+      });
+
+      return list;
+    }
+
+    function renderAttendanceFiltered() {
+      const filtered = getFilteredShifts();
+      renderAttendance(filtered);
+      attendanceCount.textContent = `Mostrando ${filtered.length} de ${currentShifts.length} turno(s).`;
     }
 
     function renderAttendance(shifts) {
       const empleadosPorId = Object.fromEntries(currentStaff.map((s) => [s.id, s.nombre]));
 
-      const abiertos = shifts.filter((t) => !t.salida);
-      if (abiertos.length) {
+      const abiertosTotal = currentShifts.filter((t) => !t.salida);
+      if (abiertosTotal.length) {
         openShiftsWarning.hidden = false;
-        openShiftsWarning.textContent = `⚠️ Hay ${abiertos.length} turno(s) sin fichar salida.`;
+        openShiftsWarning.textContent = `⚠️ Hay ${abiertosTotal.length} turno(s) sin fichar salida.`;
       } else {
         openShiftsWarning.hidden = true;
       }
 
       if (!shifts.length) {
-        attendanceBody.innerHTML = '<tr><td colspan="6" class="empty-state">Todavia no hay turnos registrados.</td></tr>';
+        attendanceBody.innerHTML = '<tr><td colspan="6" class="empty-state">No hay turnos que coincidan con los filtros.</td></tr>';
       } else {
         attendanceBody.innerHTML = shifts
           .map(
@@ -557,7 +711,7 @@
 
       attendanceBody.querySelectorAll('[data-edit-shift]').forEach((btn) => {
         btn.addEventListener('click', async () => {
-          const t = shifts.find((x) => x.id === Number(btn.dataset.editShift));
+          const t = currentShifts.find((x) => x.id === Number(btn.dataset.editShift));
           if (!t) return;
           const nuevaSalida = prompt(
             `Editar salida de ${empleadosPorId[t.empleadoId]}\n(formato: 2025-01-15T22:30, vacio para dejar abierto)`,
@@ -577,6 +731,94 @@
         });
       });
     }
+
+    attendanceSearch.addEventListener('input', renderAttendanceFiltered);
+    attendanceEmpleadoFilter.addEventListener('change', renderAttendanceFiltered);
+    attendanceOrigenFilter.addEventListener('change', renderAttendanceFiltered);
+    attendanceEstadoFilter.addEventListener('change', renderAttendanceFiltered);
+
+    attendanceClearFiltersBtn.addEventListener('click', () => {
+      attendanceSearch.value = '';
+      attendanceEmpleadoFilter.value = '';
+      attendanceOrigenFilter.value = '';
+      attendanceEstadoFilter.value = '';
+      renderAttendanceFiltered();
+    });
+
+    document.querySelectorAll('[data-sort]').forEach((th) => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        if (attendanceSort.key === key) {
+          attendanceSort.dir = attendanceSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+          attendanceSort = { key, dir: 'asc' };
+        }
+        renderAttendanceFiltered();
+      });
+    });
+
+    // ---------- Exportar CSV de turnos ----------
+    function shiftsToCsv(shifts) {
+      const empleadosPorId = Object.fromEntries(currentStaff.map((s) => [s.id, s.nombre]));
+      const header = ['Empleado', 'Entrada', 'Salida', 'Horas', 'Origen', 'Notas'];
+      const lines = [header.join(',')];
+
+      for (const t of shifts) {
+        const nombre = empleadosPorId[t.empleadoId] || '(desconocido)';
+        const horas = horasDeTurnoNum(t);
+        lines.push(
+          [
+            `"${nombre.replace(/"/g, '""')}"`,
+            `"${fmtDateTime(t.entrada)}"`,
+            `"${t.salida ? fmtDateTime(t.salida) : 'abierto'}"`,
+            horas === null ? '' : horas.toFixed(2),
+            `"${t.origen || ''}"`,
+            `"${(t.notas || '').replace(/"/g, '""')}"`,
+          ].join(',')
+        );
+      }
+      return lines.join('\n');
+    }
+
+    function downloadCsv(content, filename) {
+      const blob = new Blob(['\uFEFF' + content], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    attendanceExportBtn.addEventListener('click', () => {
+      const desde = attendanceExportDesde.value;
+      const hasta = attendanceExportHasta.value;
+
+      let toExport;
+      let filename;
+
+      if (desde || hasta) {
+        const desdeMs = desde ? new Date(desde + 'T00:00:00').getTime() : -Infinity;
+        const hastaMs = hasta ? new Date(hasta + 'T23:59:59').getTime() : Infinity;
+        toExport = currentShifts.filter((t) => {
+          const e = new Date(t.entrada).getTime();
+          return e >= desdeMs && e <= hastaMs;
+        });
+        filename = `turnos_${desde || 'inicio'}_a_${hasta || 'fin'}.csv`;
+      } else {
+        toExport = getFilteredShifts();
+        filename = `turnos_filtrados_${new Date().toISOString().slice(0, 10)}.csv`;
+      }
+
+      if (!toExport.length) {
+        alert('No hay turnos para exportar con esos criterios.');
+        return;
+      }
+
+      downloadCsv(shiftsToCsv(toExport), filename);
+    });
 
     // ============ Dashboard ============
     function renderDashboard() {
