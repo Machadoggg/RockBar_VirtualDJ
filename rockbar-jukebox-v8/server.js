@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser');
 const QRCode = require('qrcode');
 
 const config = require('./lib/config');
-const { scanSongs } = require('./lib/songs');
+//const { scanSongs } = require('./lib/songs');
 const { getNightKey } = require('./lib/night');
 const store = require('./lib/store');
 const vdj = require('./lib/vdj');
@@ -14,6 +14,7 @@ const staff = require('./lib/staff');
 const attendance = require('./lib/attendance');
 const payroll = require('./lib/payroll');
 const missingSongs = require('./lib/missingSongs');
+const { scanSongs, getCategories } = require('./lib/songs');
 
 const app = express();
 app.use(express.json());
@@ -152,9 +153,14 @@ app.get('/api/songs', async (req, res) => {
       id: s.id,
       title: s.title,
       artist: s.artist,
+      category: s.category,
       queued: isSongQueued(s, cache),
     })),
   });
+});
+
+app.get('/api/categories', (req, res) => {
+  res.json({ categories: getCategories(config) });
 });
 
 // Publico: lo que consume el carrusel de promociones del cliente
@@ -255,7 +261,7 @@ app.post('/api/request', async (req, res) => {
   }
 
   const result = await vdj.addToAutomix(config, {
-    folder: config.videosFolder,
+    folder: path.dirname(song.fullPath),
     baseName: song.baseName,
   });
 

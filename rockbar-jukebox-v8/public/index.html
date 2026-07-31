@@ -35,7 +35,7 @@
   #mainApp .brand-tag { font-size: 0.72rem; color: var(--text-dim, #9a8d83); }
 
   #mainApp .badges {
-    display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+    display: flex; gap: 8px; margin-top: 0px; flex-wrap: wrap;
   }
   #mainApp .remaining, #mainApp .credits-badge {
     font-size: 0.76rem; padding: 5px 10px; border-radius: 10px; height: 30px; margin-top: 5px;
@@ -53,6 +53,7 @@
     z-index: 15;
     padding: 8px 0px 10px;
     background: var(--bg, #0b0a0c);
+    margin-top: 0px;
   }
   #mainApp .search-wrap input {
     width: 100%;
@@ -61,9 +62,44 @@
     font-size: 0.95rem;
   }
 
+
+  #mainApp .category-chips {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--chips-top, 140px);
+  z-index: 14; /* debajo del search-wrap (15) y del topbar (20) */
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 16px 10px;
+  background: var(--bg, #0b0a0c);
+  scrollbar-width: none;
+}
+#mainApp .category-chips::-webkit-scrollbar { display: none; }
+
+#mainApp .category-chip {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border, #332821);
+  background: var(--bg-card, #161110);
+  color: var(--text-dim, #9a8d83);
+  font-size: 0.82rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#mainApp .category-chip.active {
+  background: var(--red, #c81e3a);
+  border-color: var(--red, #c81e3a);
+  color: #fff;
+  font-weight: 600;
+}
+
+
   /* ---------- Lista de canciones: mas aire para el dedo ---------- */
   #mainApp main { padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 24px); }
-  #mainApp .song-list { padding: 4px 0px; }
+  #mainApp .song-list { padding: 40px 0px; }
   #mainApp .song-item {
     padding: 14px 12px;
     border-radius: 12px;
@@ -213,6 +249,7 @@
 
   <!-- App principal -->
   <div id="mainApp" hidden>
+  
     <header class="topbar">
       <div class="brand">
         <img src="logo.png" class="brand-logo" id="vinylLogo" alt="Logo" />
@@ -241,6 +278,8 @@
       <div class="search-wrap">
         <input id="searchInput" type="search" placeholder="Buscar por titulo o artista..." autocomplete="off" />
       </div>
+
+      <div class="category-chips" id="categoryChips"></div>
 
       <ul id="songList" class="song-list"></ul>
 
@@ -456,10 +495,21 @@
     })();
 
     function ajustarStickyOffsets() {
-    const topbar = document.querySelector('#mainApp .topbar');
-    if (!topbar) return;
-    document.documentElement.style.setProperty('--header-h', topbar.offsetHeight + 'px');
-  }
+      const topbar = document.querySelector('#mainApp .topbar');
+      const searchWrap = document.querySelector('#mainApp .search-wrap');
+      const chips = document.querySelector('#mainApp .category-chips');
+      if (!topbar || !searchWrap) return;
+
+        const headerH = topbar.offsetHeight;
+        const searchH = searchWrap.offsetHeight;
+        const chipsH = chips && !chips.hidden ? chips.offsetHeight : 0;
+
+      document.documentElement.style.setProperty('--header-h', headerH + 'px');
+      document.documentElement.style.setProperty('--chips-top', (headerH + searchH) + 'px');
+      document.documentElement.style.setProperty('--content-offset', (headerH + searchH + chipsH) + 'px');
+    }
+
+  window.ajustarStickyOffsets = ajustarStickyOffsets; // ← agregar esta línea
 
   window.addEventListener('load', ajustarStickyOffsets);
   window.addEventListener('resize', ajustarStickyOffsets);
@@ -467,9 +517,16 @@
   // El header puede cambiar de alto cuando llegan los datos de /api/status
   // (aparece el badge de creditos, cambia el texto de "canciones restantes").
   // Un observer detecta esos cambios de tamaño automaticamente.
+
   const topbarEl = document.querySelector('#mainApp .topbar');
   if (topbarEl && window.ResizeObserver) {
     new ResizeObserver(ajustarStickyOffsets).observe(topbarEl);
+  }
+
+
+  const chipsEl = document.querySelector('#mainApp .category-chips');
+    if (chipsEl && window.ResizeObserver) {
+    new ResizeObserver(ajustarStickyOffsets).observe(chipsEl);
   }
     
   </script>

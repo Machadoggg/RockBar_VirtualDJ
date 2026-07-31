@@ -93,11 +93,15 @@
 
   const whatsappCta = document.getElementById('whatsappCta');
 
+  const categoryChipsEl = document.getElementById('categoryChips');
+
 
   // ---------- Estado ----------
   let cfg = null;
   let status = null;
   let allSongs = [];
+  let allCategories = [];
+  let selectedCategory = '';
   let requestInFlight = false;
   let toastTimer = null;
   let wheelRotation = 0;
@@ -139,7 +143,7 @@
     if (!cfg || !status) return;
 
     if (status.remainingFree > 0) {
-      remainingInfo.textContent = `Te quedan ${status.remainingFree} de ${cfg.requestsPerWindow} canciones por pedir`;
+      remainingInfo.textContent = `${status.remainingFree} de ${cfg.requestsPerWindow} por pedir`;
     } else if (status.credits > 0) {
       remainingInfo.textContent = `Sin pedidos de canciones por ahora, pero tenes ${status.credits} credito(s) para pedir igual`;
     } else if (status.nextFreeSlotAt) {
@@ -168,13 +172,14 @@
   // ---------- Lista de canciones ----------
   function renderSongs(filterText) {
     const q = (filterText || '').trim().toLowerCase();
-    const filtered = !q
-      ? allSongs
-      : allSongs.filter((s) => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q));
+    const filtered = allSongs.filter((s) => {
+      const matchesText = !q || s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q);
+      const matchesCategory = !selectedCategory || s.category === selectedCategory;
+      return matchesText && matchesCategory;
+    });
 
     songListEl.innerHTML = '';
     emptyState.hidden = filtered.length !== 0;
-
 
     if (filtered.length === 0 && q) {
       updateWhatsappCta(filterText);
@@ -266,6 +271,43 @@
       errorState.hidden = false;
       errorState.textContent = 'No se pudo cargar la lista de canciones.';
     }
+  }
+
+  async function loadCategories() {
+    try {
+      const res = await fetch('/api/categories');
+      const data = await res.json();
+      allCategories = data.categories || [];
+      renderCategoryChips();
+    } catch {
+      allCategories = [];
+    }
+  }
+
+  function renderCategoryChips() {
+    if (!allCategories.length) {
+      categoryChipsEl.hidden = true;
+      return;
+    }
+    categoryChipsEl.hidden = false;
+
+    const chips = ['', ...allCategories]; // '' = "Todas"
+    categoryChipsEl.innerHTML = chips
+      .map((cat) => {
+        const label = cat === '' ? 'Todas' : cat;
+        const active = cat === selectedCategory ? 'active' : '';
+        return `<button class="category-chip ${active}" data-category="${cat}">${label}</button>`;
+      })
+      .join('');
+
+    categoryChipsEl.querySelectorAll('.category-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        selectedCategory = btn.dataset.category;
+        renderCategoryChips();
+        renderSongs(searchInput.value);
+      });
+    });
+    if (window.ajustarStickyOffsets) window.ajustarStickyOffsets(); // ← agregar esta línea
   }
 
 
@@ -720,6 +762,7 @@
   async function enterMainApp() {
     barNameEl.textContent = `${cfg.barName}`;
     await refreshStatus();
+    await loadCategories();
     await loadSongs();
     startAutoRefresh();
   }

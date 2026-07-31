@@ -21,44 +21,85 @@ function stableId(fullPath) {
   return crypto.createHash('sha1').update(fullPath).digest('hex').slice(0, 16);
 }
 
+const UNCATEGORIZED_LABEL = 'Sin categoria';
+
 /**
- * Escanea la carpeta de videos (no recursivo, para mantenerlo simple y
- * predecible) y devuelve la lista de canciones disponibles.
+ * Escanea UNA carpeta (no recursivo dentro de si misma) y le asigna la
+ * categoria indicada a cada cancion encontrada ahi.
  */
-function scanSongs(config) {
-  const { videosFolder, videoExtensions } = config;
-
-  if (!videosFolder || !fs.existsSync(videosFolder)) {
-    return { error: `La carpeta de videos no existe o no esta configurada: "${videosFolder}"`, songs: [] };
-  }
-
+function scanFolder(folderPath, videoExtensions, category) {
   let entries;
   try {
-    entries = fs.readdirSync(videosFolder, { withFileTypes: true });
-  } catch (err) {
-    return { error: `No se pudo leer la carpeta de videos: ${err.message}`, songs: [] };
+    entries = fs.readdirSync(folderPath, { withFileTypes: true });
+  } catch {
+    return [];
   }
 
-  const songs = entries
+  return entries
     .filter((e) => e.isFile())
     .filter((e) => videoExtensions.includes(path.extname(e.name).toLowerCase()))
     .map((e) => {
       const ext = path.extname(e.name);
       const baseName = path.basename(e.name, ext);
       const { title, artist } = parseTitleArtist(baseName);
-      const fullPath = path.join(videosFolder, e.name);
+      const fullPath = path.join(folderPath, e.name);
       return {
         id: stableId(fullPath),
         filename: e.name,
         baseName,
         title: title || baseName,
         artist,
+        category,
         fullPath,
       };
-    })
-    .sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
+    });
+}
+
+/**
+ * Escanea la carpeta raiz de videos, un nivel de profundidad:
+ * - Archivos sueltos directo en la raiz -> categoria "Sin categoria"
+ *   (mantiene compatibilidad con lo que ya tenias antes de organizar en
+ *   subcarpetas).
+ * - Cada subcarpeta de primer nivel (ej: "Metal", "Español", "80s") se
+ *   usa tal cual como nombre de categoria.
+ * No se baja mas de un nivel (subcarpetas dentro de subcarpetas se ignoran).
+ */
+function scanSongs(config) {
+  const { videosFolder, videoExtensions } = config;
+  if (!videosFolder || !fs.existsSync(videosFolder)) {
+    return { error: `La carpeta de videos no existe o no esta configurada: "${videosFolder}"`, songs: [] };
+  }
+
+  let rootEntries;
+  try {
+    rootEntries = fs.readdirSync(videosFolder, { withFileTypes: true });
+  } catch (err) {
+    return { error: `No se pudo leer la carpeta de videos: ${err.message}`, songs: [] };
+  }
+
+  let songs = [];
+
+  songs = songs.concat(scanFolder(videosFolder, videoExtensions, UNCATEGORIZED_LABEL));
+
+  const subfolders = rootEntries.filter((e) => e.isDirectory());
+  for (const dir of subfolders) {
+    const categoryFolder = path.join(videosFolder, dir.name);
+    songs = songs.concat(scanFolder(categoryFolder, videoExtensions, dir.name));
+  }
+
+  songs.sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
 
   return { error: null, songs };
 }
 
-module.exports = { scanSongs, parseTitleArtist };
+/**
+ * Lista de categorias distintas encontradas actualmente (para pintar los
+ * chips de filtro sin tener que derivarlo del lado del cliente).
+ */
+function getCategories(config) {
+  const { songs } = scanSongs(config);
+  const set = new Set(songs.map((s) => s.category));
+  return [...set].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+}
+
+module.exports = { scanSongs, parseTitleArtist, getCategories, UNCATEGORIZED_LABEL };
