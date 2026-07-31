@@ -393,3 +393,87 @@ Con el servidor detenido, corré desde la raíz del proyecto:
 
 "node scripts/seed-attendance.js"
 
+
+
+
+
+
+
+
+
+Opción 2 — Dominio gratis apuntando a tu IP local (la que yo recomendaría)
+
+
+
+Esto es gratis, funciona en cualquier celular (Android o iPhone), y no requiere abrir puertos ni exponer nada a internet — el celular solo usa internet para "traducir" el nombre a la IP, y después se conecta directo por WiFi local como ya hace ahora.
+
+
+
+Pasos:
+
+
+
+Reservá la IP fija de tu PC en el router (DHCP reservation / IP estática) — así 192.168.1.36 nunca cambia, aunque reinicies el router o la PC. Se hace desde la configuración de tu router (buscá "DHCP reservation" o "IP estática" en su panel — varía según marca).
+
+Creá una cuenta gratis en duckdns.org — te da un subdominio tipo barracuda-rock.duckdns.org sin costo, sin vencimiento.
+
+Apuntá ese subdominio a tu IP LOCAL (192.168.1.36), no a tu IP pública de internet. DuckDNS te deja poner cualquier IP en el campo, así que ponés la de tu red interna directamente.
+
+En tu .env, cambiá:
+
+&#x20;  PUBLIC\_URL=http://barracuda-rock.duckdns.org:60061
+
+Reiniciá el servidor — tu /qr.png ya usa config.publicUrl automáticamente (lo vi en tu server.js), así que el QR se regenera solo con el nombre nuevo la próxima vez que alguien lo escanee o lo reimprimas.
+
+Probá desde un celular conectado al WiFi del bar, escribiendo http://barracuda-rock.duckdns.org:60061 — debería cargar el Jukebox igual que con la IP, pero mostrando el nombre en vez de los números.
+
+
+
+Una advertencia real que puede pasar: algunos routers modernos tienen una protección de seguridad llamada "DNS rebinding protection" que bloquea que un dominio público resuelva a una IP privada (justamente para evitar ataques). Si después de configurar esto el celular no carga la página, es probablemente eso — la solución en ese caso es buscar esa opción en el panel del router y desactivarla, o cambiar de método.
+
+
+
+Extra opcional — sacar también el :60061 del final
+
+
+
+Si además querés que ni el puerto se vea (quedaría solo barracuda-rock.duckdns.org), tendrías que correr la app en el puerto 80 en vez del 60061. En Windows eso generalmente pide permisos de administrador para que Node pueda usar ese puerto, y si ya tenés otra cosa corriendo en el 80 (como IIS, que vimos que usás para otros proyectos), chocarían — ahí lo más prolijo sería poner un reverse proxy (IIS o nginx) adelante que escuche en el 80 y redirija internamente al 60061. Es más trabajo, así que te lo dejo como mejora futura si te interesa, no hace falta para resolver lo que pediste ahora.
+
+
+
+
+
+///// subdominio /////////
+
+barracuda-clasicos.duckdns.org
+
+barracuda-bar.duckdns.org
+
+
+
+PUBLIC\_URL=http://barracuda-bar.duckdns.org:60061
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
