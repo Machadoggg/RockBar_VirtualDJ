@@ -52,6 +52,8 @@ const config = {
   instagramHandle: process.env.INSTAGRAM_HANDLE || '@barracudabar',
   instagramUrl: process.env.INSTAGRAM_URL || 'https://instagram.com/barracudabar',
 
+  whatsappNumber: process.env.WHATSAPP_NUMBER || null,
+
   adminToken: process.env.ADMIN_TOKEN || 'cambiar-esta-clave',
   barName: process.env.BAR_NAME || 'Rock Bar',
   superAdminToken: process.env.SUPER_ADMIN_TOKEN || null,

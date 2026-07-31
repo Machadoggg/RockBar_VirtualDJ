@@ -91,6 +91,9 @@
   const promoDots = document.getElementById('promoDots');
   const promoEmpty = document.getElementById('promoEmpty');
 
+  const whatsappCta = document.getElementById('whatsappCta');
+
+
   // ---------- Estado ----------
   let cfg = null;
   let status = null;
@@ -171,6 +174,12 @@
 
     songListEl.innerHTML = '';
     emptyState.hidden = filtered.length !== 0;
+
+
+    if (filtered.length === 0 && q) {
+      updateWhatsappCta(filterText);
+    }
+
 
     for (const song of filtered) {
       const li = document.createElement('li');
@@ -259,6 +268,35 @@
     }
   }
 
+
+// ---------- Whatsapp ----------
+  function updateWhatsappCta(query) {
+    if (!whatsappCta) return;
+    	if (!cfg || !cfg.whatsappNumber) {
+          whatsappCta.hidden = true;
+      	  return;
+    		}
+    	  whatsappCta.hidden = false;
+
+    	  const nombre = status && status.nickname ? status.nickname : 'un cliente';
+    	  const cancionTxt = query ? `"${query}"` : '(no escribio nada especifico)';
+    	  const mensaje = `Hola DJ! Soy ${nombre}. No encontre la cancion ${cancionTxt} en la lista, la puedes agregar por favor.`;
+
+    	  whatsappCta.href = `https://wa.me/${cfg.whatsappNumber}?text=${encodeURIComponent(mensaje)}`;
+  	}
+
+  	// Fire-and-forget: no bloquea al usuario ni depende de que responda el
+  	// servidor, solo deja registro para que el DJ pueda revisar despues
+  	// que canciones piden seguido y no estan en la biblioteca.
+  	function logMissingSongAttempt(query) {
+    	  fetch('/api/missing-song', {
+      	  method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query }),
+        }).catch(() => {});
+  }
+
+
   // ---------- Instagram ----------
   async function claimInstagram(statusEl) {
     try {
@@ -284,6 +322,10 @@
 
   igClaimBtn.addEventListener('click', () => claimInstagram(igStatus));
   igHeaderBtn.addEventListener('click', () => claimInstagram(null));
+
+  whatsappCta.addEventListener('click', () => {
+    logMissingSongAttempt(searchInput.value.trim());
+  });
 
 
 // ---------- Promociones (carrusel de anuncios del admin) ----------

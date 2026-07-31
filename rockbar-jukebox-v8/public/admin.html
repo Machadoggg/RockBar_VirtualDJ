@@ -165,13 +165,13 @@
   <div class="app-shell" id="appShell" hidden>
     <aside class="sidebar">
       <div class="brand">
-        <strong>🎸 Bar-racuda</strong>
-        <span>Panel del DJ</span>
+        <strong>🎸 Bar-racuda Administración - DJ</strong>
       </div>
 
       <div class="nav-item active" data-page="dashboard">📊 Dashboard</div>
       <div class="nav-item" data-page="pedidos">🎵 Pedidos</div>
       <div class="nav-item" data-page="publicidad">📢 Publicidad</div>
+      <div class="nav-item" data-page="noencontradas">🔍 No encontradas</div>
       <div class="nav-item" data-page="qr">🔗 Codigo QR</div>
 
       <div class="sidebar-footer">
@@ -190,7 +190,7 @@
 
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="label">Dispositivos hoy</div>
+            <div class="label">Dispositivos conectados hoy</div>
             <div class="value" id="statDevices">—</div>
           </div>
           <div class="stat-card">
@@ -242,12 +242,7 @@
         </div>
 
         <div class="panel">
-          <h3>📢 Anuncios cargados</h3>
-          <div id="adsListWrap"></div>
-        </div>
-
-        <div class="panel">
-          <h3 id="adFormTitle">➕ Nuevo anuncio</h3>
+          <h3 id="adFormTitle">➕ Crear anuncio</h3>
           <input type="hidden" id="adId" />
           <div class="form-grid">
             <div>
@@ -282,6 +277,41 @@
             <button class="secondary" id="cancelAdBtn">Cancelar</button>
           </div>
           <p id="adStatus" class="error-state" hidden></p>
+        </div>
+
+        <div class="panel">
+          <h3>📢 Anuncios creados</h3>
+          <div id="adsListWrap"></div>
+        </div>
+
+      </section>
+
+      <!-- ---------- NO ENCONTRADAS ---------- -->
+      <section class="page" id="page-noencontradas">
+        <div class="page-header">
+          <h2>Canciones no encontradas</h2>
+          <p>Busquedas de clientes que no dieron resultado, agrupadas por frecuencia</p>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="label">Busquedas fallidas</div>
+            <div class="value" id="statMissingTotal">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Canciones distintas pedidas</div>
+            <div class="value" id="statMissingUnique">—</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>🔥 Mas pedidas y no encontradas</h3>
+          <table>
+            <thead>
+              <tr><th>Busqueda</th><th>Veces</th><th>Ultima vez</th><th>Ultimo cliente</th></tr>
+            </thead>
+            <tbody id="missingSongsBody"></tbody>
+          </table>
         </div>
       </section>
 
@@ -341,6 +371,10 @@
     const statRequests = document.getElementById('statRequests');
     const statAds = document.getElementById('statAds');
     const dashRecentBody = document.getElementById('dashRecentBody');
+
+    const statMissingTotal = document.getElementById('statMissingTotal');
+    const statMissingUnique = document.getElementById('statMissingUnique');
+    const missingSongsBody = document.getElementById('missingSongsBody');
 
     let currentDevices = [];
     let currentAds = [];
@@ -432,6 +466,7 @@
       });
 
       await loadAds();
+      await loadMissingSongs();
       renderDashboard();
     }
 
@@ -614,6 +649,79 @@
       tokenInput.value = savedToken;
       loadSummary();
     }
+
+
+    // ============ Vista de no encontradas ============
+    async function loadMissingSongs() {
+      const token = getToken();
+      if (!token) return;
+
+      const res = await fetch(`/api/admin/missing-songs?token=${encodeURIComponent(token)}`);
+      if (!res.ok) return;
+      const raw = await res.json();
+
+      renderMissingSongs(raw);
+    }
+
+    function normalizeQuery(q) {
+      return (q || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    function renderMissingSongs(raw) {
+      // Agrupar por texto de busqueda normalizado (asi "bad bunny" y
+      // "Bad Bunny " cuentan como el mismo pedido en vez de dos filas
+      // distintas).
+      const grupos = new Map();
+
+      for (const entry of raw) {
+        const key = normalizeQuery(entry.query);
+        if (!key) continue; // ignorar busquedas vacias
+
+        if (!grupos.has(key)) {
+          grupos.set(key, {
+            original: entry.query.trim(),
+            count: 0,
+            lastAt: entry.at,
+            lastNickname: entry.nickname,
+          });
+        }
+
+        const g = grupos.get(key);
+        g.count++;
+        // raw ya viene ordenado del mas reciente al mas viejo (ver
+        // missingSongs.getAll en el backend), asi que la primera vez que
+        // encontramos cada key es tambien la mas reciente.
+        if (new Date(entry.at) > new Date(g.lastAt)) {
+          g.lastAt = entry.at;
+          g.lastNickname = entry.nickname;
+        }
+      }
+
+      const rows = [...grupos.values()].sort((a, b) => b.count - a.count);
+
+      statMissingTotal.textContent = raw.length;
+      statMissingUnique.textContent = rows.length;
+
+      if (!rows.length) {
+        missingSongsBody.innerHTML = '<tr><td colspan="4" class="empty-state">Todavia no hay busquedas sin resultado registradas.</td></tr>';
+        return;
+      }
+
+      missingSongsBody.innerHTML = rows
+        .map(
+          (r) => `
+        <tr>
+          <td>${escapeHtml(r.original)}</td>
+          <td>${r.count}</td>
+          <td>${new Date(r.lastAt).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</td>
+          <td>${r.lastNickname ? escapeHtml(r.lastNickname) : '<em>(sin nombre)</em>'}</td>
+        </tr>
+      `
+        )
+        .join('');
+    }
+
+    
   </script>
 </body>
 </html>

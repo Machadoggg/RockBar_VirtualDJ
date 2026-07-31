@@ -243,7 +243,14 @@
       </div>
 
       <ul id="songList" class="song-list"></ul>
-      <p id="emptyState" class="empty-state" hidden>No hay canciones que coincidan con tu busqueda.</p>
+
+      <div id="emptyState" class="empty-state" hidden>
+  	<p style="margin-bottom:12px;">😕 No encontramos esa cancion en la lista.</p>
+  	<a id="whatsappCta" class="btn-secondary wide" href="#" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;">
+    	📲 Pedisela al DJ por WhatsApp
+  	</a>
+      </div>
+
       <p id="errorState" class="error-state" hidden></p>
     </main>
 
@@ -298,8 +305,8 @@
           </button>
 
           <button class="game-hub-btn" data-game="duckhunt">
-            <span class="game-hub-emoji">🦆🔫</span>
-            <span>Duck Hunt Pro</span>
+            <span class="game-hub-emoji">🦆</span>
+            <span>Duck Hunt</span>
           </button>
           <button class="game-hub-btn" data-game="beerjump">
             <span class="game-hub-emoji">🍺</span>

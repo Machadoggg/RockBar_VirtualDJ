@@ -156,13 +156,12 @@
   <div class="app-shell" id="appShell" hidden>
     <aside class="sidebar">
       <div class="brand">
-        <strong>🎸 Bar-racuda</strong>
-        <span>Panel de superadmin</span>
+        <strong>🎸 Bar-racuda Superadmin - BOSS</strong>
       </div>
 
       <div class="nav-item active" data-page="dashboard">📊 Dashboard</div>
-      <div class="nav-item" data-page="staff">👥 Empleados</div>
-      <div class="nav-item" data-page="attendance">🕐 Turnos</div>
+      <div class="nav-item" data-page="staff">👥 Colaboradores</div>
+      <div class="nav-item" data-page="attendance">🕐 Lista de Turnos</div>
       <div class="nav-item" data-page="payroll">💰 Nomina</div>
 
       <div class="sidebar-footer">
@@ -211,17 +210,7 @@
         </div>
 
         <div class="panel">
-          <h3>👥 Colaboradores</h3>
-          <table>
-            <thead>
-              <tr><th>Nombre</th><th>Rol</th><th>PIN</th><th>Tarifa/hora</th><th>Estado</th><th></th></tr>
-            </thead>
-            <tbody id="staffBody"></tbody>
-          </table>
-        </div>
-
-        <div class="panel">
-          <h3 id="formTitle">➕ Nuevo empleado</h3>
+          <h3 id="formTitle">➕ Crear colaborador</h3>
           <input type="hidden" id="staffId" />
           <div class="form-grid">
             <div>
@@ -247,6 +236,17 @@
           </div>
           <p id="staffStatus" class="error-state" hidden></p>
         </div>
+
+        <div class="panel">
+          <h3>👥 Colaboradores</h3>
+          <table>
+            <thead>
+              <tr><th>Nombre</th><th>Rol</th><th>PIN</th><th>Tarifa/hora</th><th>Estado</th><th></th></tr>
+            </thead>
+            <tbody id="staffBody"></tbody>
+          </table>
+        </div>
+
       </section>
 
       <!-- ---------- TURNOS ---------- -->

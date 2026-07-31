@@ -552,6 +552,24 @@
     "id": 62,
     "empleadoId": 1,
     "entrada": "2026-07-30T03:36:46.995Z",
+    "salida": "2026-07-30T04:52:00.000Z",
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": "superadmin"
+  },
+  {
+    "id": 63,
+    "empleadoId": 2,
+    "entrada": "2026-07-31T01:16:02.122Z",
+    "salida": null,
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": null
+  },
+  {
+    "id": 64,
+    "empleadoId": 1,
+    "entrada": "2026-07-31T01:16:32.790Z",
     "salida": null,
     "origen": "kiosco",
     "notas": null,

@@ -13,6 +13,7 @@ const ads = require('./lib/ads');
 const staff = require('./lib/staff');
 const attendance = require('./lib/attendance');
 const payroll = require('./lib/payroll');
+const missingSongs = require('./lib/missingSongs');
 
 const app = express();
 app.use(express.json());
@@ -138,6 +139,7 @@ app.get('/api/config', (req, res) => {
     gameCooldownMinutes: config.gameCooldownMinutes,
     instagramHandle: config.instagramHandle,
     instagramUrl: config.instagramUrl,
+    whatsappNumber: config.whatsappNumber,
   });
 });
 
@@ -493,3 +495,21 @@ app.get('/api/superadmin/payroll/csv', (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="nomina_${desde.slice(0, 10)}_a_${hasta.slice(0, 10)}.csv"`);
   res.send('\uFEFF' + csv); // BOM: para que Excel abra bien las tildes/eñes
 });
+
+
+app.post('/api/missing-song', async (req, res) => {
+  const deviceId = getOrSetDeviceId(req, res);
+  const nightKey = getNightKey(new Date(), config.nightResetHour);
+  const status = store.getDeviceStatus(nightKey, deviceId, config);
+  const { query } = req.body || {};
+
+  await missingSongs.logMissingSong(query, status.nickname);
+  res.json({ ok: true });
+});
+
+// Para que puedas revisarlas despues desde el admin
+app.get('/api/admin/missing-songs', (req, res) => {
+  if (!checkAdminToken(req, res)) return;
+  res.json(missingSongs.getAll());
+});
+
