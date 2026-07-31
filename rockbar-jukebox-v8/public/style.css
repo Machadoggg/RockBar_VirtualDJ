@@ -528,6 +528,7 @@ main {
   flex-direction: column;
   line-height: 1.1;
   min-width: 0;
+  margin-left: -11px;
 }
 
 .brand-name {

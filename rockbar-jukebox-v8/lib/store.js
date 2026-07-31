@@ -316,6 +316,27 @@ function wipeNight(nightKey) {
   });
 }
 
+/**
+ * Borra noches mas viejas que daysToKeep dias, para que requests.json no
+ * crezca sin limite. No afecta la noche actual ni las recientes.
+ */
+function purgeOldNights(currentNightKey, daysToKeep = 3) {
+  return withLock(() => {
+    const data = readData();
+    const cutoff = new Date(currentNightKey);
+    cutoff.setDate(cutoff.getDate() - daysToKeep);
+    const cutoffKey = cutoff.toISOString().slice(0, 10);
+
+    let changed = false;
+    for (const key of Object.keys(data)) {
+      if (key < cutoffKey) {
+        delete data[key];
+        changed = true;
+      }
+    }
+    if (changed) writeData(data);
+  });
+}
 
 module.exports = {
   getDeviceStatus,
@@ -328,6 +349,7 @@ module.exports = {
   resetNight,
   resetDevice,
   wipeNight,
+  purgeOldNights,
 };
 
 

@@ -388,6 +388,15 @@ app.listen(config.port, () => {
 });
 
 
+// Limpieza automatica de noches viejas (deja las ultimas 3 noches en el
+// archivo, borra el resto). Se chequea cada hora; si ya se limpio hoy, no
+// hace nada extra.
+setInterval(() => {
+  const nightKey = getNightKey(new Date(), config.nightResetHour);
+  store.purgeOldNights(nightKey, 3).catch(() => {});
+}, 60 * 60 * 1000); // cada hora
+
+
 
 function checkSuperAdminToken(req, res) {
   const token = req.query.token || req.body?.token || req.headers['x-super-admin-token'];

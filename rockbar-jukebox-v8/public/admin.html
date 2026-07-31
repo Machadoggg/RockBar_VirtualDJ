@@ -169,8 +169,9 @@
       </div>
 
       <div class="nav-item active" data-page="dashboard">📊 Dashboard</div>
-      <div class="nav-item" data-page="pedidos">🎵 Pedidos</div>
       <div class="nav-item" data-page="publicidad">📢 Publicidad</div>
+      <div class="nav-item" data-page="pedidos">🎵 Pedidos</div>
+      <div class="nav-item" data-page="pedidos">🏆 Ranking creditos</div>
       <div class="nav-item" data-page="noencontradas">🔍 No encontradas</div>
       <div class="nav-item" data-page="qr">🔗 Codigo QR</div>
 
@@ -204,6 +205,14 @@
         </div>
 
         <div class="panel">
+          <h3>🏆 Ranking de creditos de la noche</h3>
+          <table>
+            <thead><tr><th>#</th><th>Cliente</th><th>Creditos</th><th>Pedidos</th></tr></thead>
+            <tbody id="leaderboardBody"></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
           <h3>🎵 Ultimos pedidos</h3>
           <table>
             <thead><tr><th>Nombre</th><th>Pedidos</th><th>Ultimo pedido</th></tr></thead>
@@ -221,7 +230,7 @@
 
         <div class="row" style="margin-bottom:18px;">
           <button class="action" id="resetAllBtn">Resetear TODOS los contadores de hoy</button>
-          <button class="danger" id="wipeAllBtn">🗑️ Borrar TODOS los registros (fin de noche)</button>
+          <button class="danger" id="wipeAllBtn">Borrar TODOS los registros (fin de noche)</button>
         </div>
 
         <div class="panel">
@@ -285,6 +294,7 @@
         </div>
 
       </section>
+
 
       <!-- ---------- NO ENCONTRADAS ---------- -->
       <section class="page" id="page-noencontradas">
@@ -620,6 +630,7 @@
       statDevices.textContent = currentDevices.length;
       statRequests.textContent = currentDevices.reduce((sum, d) => sum + d.count, 0);
       statAds.textContent = currentAds.filter((a) => a.isActive).length;
+      renderLeaderboard();
 
       const recientes = [...currentDevices]
         .filter((d) => d.lastRequestAt)
@@ -642,6 +653,34 @@
           .join('');
       }
     }
+
+    function renderLeaderboard() {
+      const ordenados = [...currentDevices]
+        .filter((d) => d.credits > 0 || d.count > 0)
+        .sort((a, b) => b.credits - a.credits)
+        .slice(0, 3);
+
+      const leaderboardBody = document.getElementById('leaderboardBody');
+      if (!ordenados.length) {
+        leaderboardBody.innerHTML = '<tr><td colspan="4" class="empty-state">Todavia no hay actividad esta noche.</td></tr>';
+        return;
+      }
+
+      const medallas = ['🥇', '🥈', '🥉'];
+      leaderboardBody.innerHTML = ordenados
+        .map(
+          (d, i) => `
+        <tr>
+          <td>${medallas[i] || i + 1}</td>
+          <td>${d.nickname ? escapeHtml(d.nickname) : '<em>(sin nombre)</em>'}</td>
+          <td><strong>${d.credits}</strong></td>
+          <td>${d.count}</td>
+        </tr>
+      `
+        )
+        .join('');
+    }
+  
 
     // ============ Arranque ============
     const savedToken = localStorage.getItem('jukebox_admin_token');
