@@ -561,7 +561,7 @@
     "id": 63,
     "empleadoId": 2,
     "entrada": "2026-07-31T01:16:02.122Z",
-    "salida": null,
+    "salida": "2026-07-31T05:17:41.145Z",
     "origen": "kiosco",
     "notas": null,
     "editadoPor": null
@@ -570,7 +570,7 @@
     "id": 64,
     "empleadoId": 1,
     "entrada": "2026-07-31T01:16:32.790Z",
-    "salida": null,
+    "salida": "2026-07-31T05:17:49.451Z",
     "origen": "kiosco",
     "notas": null,
     "editadoPor": null
