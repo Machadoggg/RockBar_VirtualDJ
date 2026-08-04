@@ -15,6 +15,7 @@ const attendance = require('./lib/attendance');
 const payroll = require('./lib/payroll');
 const missingSongs = require('./lib/missingSongs');
 const { scanSongs, getCategories } = require('./lib/songs');
+const payrollRates = require('./lib/payrollRates');
 
 const app = express();
 app.use(express.json());
@@ -527,4 +528,20 @@ app.get('/api/admin/missing-songs', (req, res) => {
   if (!checkAdminToken(req, res)) return;
   res.json(missingSongs.getAll());
 });
+
+
+app.get('/api/superadmin/payroll-rates', (req, res) => {
+  if (!checkSuperAdminToken(req, res)) return;
+  res.json(payrollRates.getRates());
+});
+
+app.put('/api/superadmin/payroll-rates', async (req, res) => {
+  if (!checkSuperAdminToken(req, res)) return;
+  const result = await payrollRates.updateRates(req.body || {});
+  if (!result.ok) return res.status(400).json(result);
+  res.json(result);
+});
+
+
+
 

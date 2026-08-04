@@ -1,0 +1,24 @@
+{
+  "fixed": {
+    "nightSurcharge": 0.35,
+    "extraDay": 0.25,
+    "extraNight": 0.75
+  },
+  "dominicalFestivoTiers": [
+    {
+      "vigenteDesde": "2025-07-01",
+      "vigenteHasta": "2026-06-30",
+      "recargo": 0.8
+    },
+    {
+      "vigenteDesde": "2026-07-01",
+      "vigenteHasta": "2027-06-30",
+      "recargo": 0.9
+    },
+    {
+      "vigenteDesde": "2027-07-01",
+      "vigenteHasta": null,
+      "recargo": 1
+    }
+  ]
+}

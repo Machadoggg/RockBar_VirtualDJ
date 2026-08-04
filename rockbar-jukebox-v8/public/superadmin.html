@@ -121,6 +121,9 @@
 
   .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 14px; }
 
+  .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+  .checkbox-row input { width: auto; }
+
   .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
   .badge.ok { background: rgba(76,140,90,0.15); color: #6fbf7f; }
   .badge.off { background: rgba(155,155,155,0.12); color: var(--text-dim); }
@@ -135,6 +138,76 @@
     .nav-item { border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
     .nav-item.active { border-left-color: transparent; border-bottom-color: var(--red); }
     .main-area { padding: 20px 16px; }
+  }
+
+  /* ---------- Loader vinilo (nomina) ---------- */
+  .vinyl-loader-overlay {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    padding: 40px 20px;
+  }
+  .vinyl-loader-overlay.active {
+    display: flex;
+  }
+
+  .vinyl-disc {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: repeating-radial-gradient(
+      circle at center,
+      #1a1a1a 0px,
+      #1a1a1a 3px,
+      #262626 4px,
+      #1a1a1a 5px
+    );
+    border: 3px solid #333;
+    position: relative;
+    animation: vinylSpin 1.1s linear infinite;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+  }
+  .vinyl-disc::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--red);
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 2px #1a1a1a, 0 0 12px rgba(200,30,58,0.6);
+  }
+  .vinyl-disc::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #0a0a0a;
+    transform: translate(-50%, -50%);
+  }
+
+  @keyframes vinylSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .vinyl-loader-text {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  .vinyl-loader-text strong {
+    color: var(--text);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.95rem;
   }
 </style>
 </head>
@@ -163,6 +236,7 @@
       <div class="nav-item" data-page="staff">👥 Colaboradores</div>
       <div class="nav-item" data-page="attendance">🕐 Lista de Turnos</div>
       <div class="nav-item" data-page="payroll">💰 Nomina</div>
+      <div class="nav-item" data-page="recargos">⚙️ Recargos</div>
 
       <div class="sidebar-footer">
         <button id="logoutBtn">Cerrar sesion</button>
@@ -229,10 +303,10 @@
               <label class="field-label">Tarifa por hora *</label>
               <input id="staffTarifa" type="number" placeholder="6000" min="0" step="0.01" style="width:100%;" />
             </div>
-	    <div class="checkbox-row" style="margin-top:8px;">
-  	      <input type="checkbox" id="staffAuxilio" />
-  	      <label for="staffAuxilio">Aplica auxilio de transporte</label>
-	    </div>
+            <div class="checkbox-row" style="margin-top:8px;">
+              <input type="checkbox" id="staffAuxilio" />
+              <label for="staffAuxilio">Aplica auxilio de transporte</label>
+            </div>
           </div>
           <div class="row">
             <button class="action" id="saveStaffBtn">Guardar</button>
@@ -246,14 +320,14 @@
           <table>
             <thead>
               <tr>
-		<th>Nombre</th>
-		<th>Rol</th>
-		<th>PIN</th>
-		<th>Tarifa/hora</th>
-		<th>Auxilio/Transporte</th>
-		<th>Estado</th>
-		<th></th>
-	      </tr>
+                <th>Nombre</th>
+                <th>Rol</th>
+                <th>PIN</th>
+                <th>Tarifa/hora</th>
+                <th>Auxilio/Transporte</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody id="staffBody"></tbody>
           </table>
@@ -271,7 +345,7 @@
         <div id="openShiftsWarning" class="error-state" hidden style="margin-bottom:14px;"></div>
 
         <div class="panel">
-          <h3>⬇️ Exportar reporte</h3>
+          <h3>Exportar reporte</h3>
           <div class="row">
             <div>
               <label class="field-label">Desde (opcional)</label>
@@ -281,10 +355,10 @@
               <label class="field-label">Hasta (opcional)</label>
               <input type="date" id="attendanceExportHasta" />
             </div>
-            <button class="action" id="attendanceExportBtn" style="align-self:flex-end;">⬇️ Exportar CSV</button>
+            <button class="action" id="attendanceExportBtn" style="align-self:flex-end;">Exportar CSV</button>
           </div>
           <p style="color:var(--text-dim); font-size:0.8rem; margin-top:10px;">
-            Si dejas las fechas vacias, se exporta lo que este visible con los filtros de arriba.
+            Si dejas las fechas vacias, se exporta lo que este visible con los filtros de abajo.
             Si elegis un rango de fechas, se exporta ESE periodo completo, sin importar los demas filtros.
           </p>
         </div>
@@ -343,7 +417,7 @@
       <section class="page" id="page-payroll">
         <div class="page-header">
           <h2>Nomina</h2>
-          <p>Calculo de horas y totales por periodo, con recargos y axilios de ley</p>
+          <p>Calculo de horas y totales por periodo, con recargos y auxilios de ley</p>
         </div>
 
         <div class="panel">
@@ -366,19 +440,106 @@
         <p id="payrollWarning" class="error-state" hidden></p>
 
         <div class="panel">
-          <table>
+          <div class="vinyl-loader-overlay" id="payrollLoader">
+            <div class="vinyl-disc"></div>
+            <div class="vinyl-loader-text">
+              <strong>Calculando la nómina...</strong>
+              Sumando horas, recargos y auxilios. Esto puede tardar unos segundos.
+            </div>
+          </div>
+
+          <!-- FIX: faltaba id="payrollTable" — sin este id, calcularPayroll()
+               no podia ocultar la tabla mientras giraba el loader, y como el
+               error explotaba ANTES del try, el loader quedaba pegado para
+               siempre. -->
+          <table id="payrollTable">
             <thead>
               <tr>
- 					 <th>Empleado</th><th>Rol</th><th>Tarifa/hora</th><th>Turnos</th>
-  					<th>Horas tot.</th><th>Horas noct.</th><th>Horas dom/fest</th><th>Horas extra</th>
-  					<th>Dias aux.</th><th>Auxilio transp.</th><th>Total</th>
-	      </tr>
+                <th>Empleado</th><th>Rol</th><th>Tarifa/hora</th><th>Turnos</th>
+                <th>Horas tot.</th><th>Horas noct.</th><th>Horas dom/fest</th><th>Horas extra</th>
+                <th>Dias aux.</th><th>Auxilio transp.</th><th>Total</th>
+              </tr>
             </thead>
-            <tbody id="payrollBody"><tr><td colspan="9" class="empty-state">Elegi un periodo y presiona Calcular.</td></tr></tbody>
+            <tbody id="payrollBody"><tr><td colspan="11" class="empty-state">Elegi un periodo y presiona Calcular.</td></tr></tbody>
           </table>
           <div style="margin-top:14px;">
-            <button class="secondary" id="exportCsvBtn" hidden>⬇️ Exportar CSV</button>
+            <button class="secondary" id="exportCsvBtn" hidden>Exportar CSV</button>
           </div>
+        </div>
+      </section>
+
+      <!-- ---------- RECARGOS ---------- -->
+      <section class="page" id="page-recargos">
+        <div class="page-header">
+          <h2>Recargos de nómina</h2>
+          <p>Estos porcentajes definen cuánto se le paga de más a un empleado por trabajar de noche, en día festivo, o en horas extra. Los define la ley colombiana — normalmente no hay que tocarlos, salvo cuando cambia la norma.</p>
+        </div>
+
+        <div class="panel" id="currentTierBanner" style="border-color: var(--red); background: rgba(200,30,58,0.08);">
+          <h3 style="margin-bottom:6px;">📌 Recargo dominical/festivo vigente hoy</h3>
+          <p style="font-size:1.4rem; font-weight:700; margin:4px 0;" id="currentTierValue">—</p>
+          <p style="color:var(--text-dim); font-size:0.85rem; margin:0;" id="currentTierRange">Calculando...</p>
+        </div>
+
+        <div class="panel">
+          <h3>⚙️ Recargos fijos (no cambian seguido)</h3>
+          <p style="color:var(--text-dim); font-size:0.85rem; margin-bottom:16px;">
+            Estos 3 valores están definidos por el Código Sustantivo del Trabajo y casi nunca cambian.
+            No los edites salvo que estés seguro de que la ley cambió — consultá con un contador antes.
+          </p>
+
+          <div class="form-grid">
+            <div>
+              <label class="field-label">Recargo nocturno</label>
+              <input type="number" id="rateNightSurcharge" step="0.01" min="0" max="300" />
+              <p style="color:var(--text-dim); font-size:0.78rem; margin-top:6px; line-height:1.4;">
+                Plata extra por trabajar entre las <strong>7:00 p.m. y las 6:00 a.m.</strong> en horario normal (sin ser hora extra).<br>
+                Ej: con 35%, una hora que normalmente vale $10.000 pasa a pagarse $13.500 si es de noche.
+              </p>
+            </div>
+            <div>
+              <label class="field-label">Hora extra diurna</label>
+              <input type="number" id="rateExtraDay" step="0.01" min="0" max="300" />
+              <p style="color:var(--text-dim); font-size:0.78rem; margin-top:6px; line-height:1.4;">
+                Plata extra por trabajar <strong>más de 8 horas en un turno</strong>, durante el día (6 a.m. a 7 p.m.).<br>
+                Ej: con 25%, una hora extra diurna de $10.000 se paga $12.500.
+              </p>
+            </div>
+            <div>
+              <label class="field-label">Hora extra nocturna</label>
+              <input type="number" id="rateExtraNight" step="0.01" min="0" max="300" />
+              <p style="color:var(--text-dim); font-size:0.78rem; margin-top:6px; line-height:1.4;">
+                Plata extra por trabajar <strong>más de 8 horas en un turno</strong>, y esas horas de más caen de noche.<br>
+                Ej: con 75%, una hora extra nocturna de $10.000 se paga $17.500.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>📅 Recargo dominical / festivo — cambia cada año</h3>
+          <p style="color:var(--text-dim); font-size:0.85rem; margin-bottom:16px; line-height:1.5;">
+            A diferencia de los anteriores, <strong>este porcentaje sube cada 1° de julio</strong> por la reforma laboral,
+            hasta llegar al 100% en 2027. Se aplica a quien trabaja un <strong>domingo o día festivo</strong>, sea de día o de noche
+            (se suma al recargo nocturno si ambos aplican al mismo tiempo).
+          </p>
+          <p style="color:var(--text-dim); font-size:0.85rem; margin-bottom:16px; background:var(--bg); padding:10px 14px; border-radius:8px;">
+            💡 <strong>No borres los tramos viejos.</strong> Si alguna vez calculás una nómina de un período pasado (por ejemplo, de antes de julio 2026),
+            el sistema necesita saber qué porcentaje regía en ESE momento. Solo agregá un tramo nuevo cuando cambie la ley — nunca edites uno que ya pasó.
+          </p>
+
+          <table>
+            <thead>
+              <tr><th>Vigente desde</th><th>Vigente hasta (vacío = sigue activo)</th><th>Recargo (%)</th><th></th></tr>
+            </thead>
+            <tbody id="tiersBody"></tbody>
+          </table>
+          <button class="secondary small" id="addTierBtn" style="margin-top:10px;">+ Agregar tramo nuevo (cuando cambie la ley)</button>
+
+          <div class="row" style="margin-top:16px;">
+            <button class="action" id="saveRatesBtn">Guardar recargos</button>
+          </div>
+          <p id="ratesStatus" class="error-state" hidden></p>
         </div>
       </section>
 
@@ -393,6 +554,10 @@
         document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
         item.classList.add('active');
         document.getElementById('page-' + item.dataset.page).classList.add('active');
+
+        if (item.dataset.page === 'recargos') {
+          loadPayrollRates();
+        }
       });
     });
 
@@ -431,6 +596,14 @@
     const statTotalTurnos = document.getElementById('statTotalTurnos');
     const dashOpenShiftsPanel = document.getElementById('dashOpenShiftsPanel');
     const dashOpenShiftsBody = document.getElementById('dashOpenShiftsBody');
+
+    const rateNightSurchargeInput = document.getElementById('rateNightSurcharge');
+    const rateExtraDayInput = document.getElementById('rateExtraDay');
+    const rateExtraNightInput = document.getElementById('rateExtraNight');
+    const tiersBody = document.getElementById('tiersBody');
+    const addTierBtn = document.getElementById('addTierBtn');
+    const saveRatesBtn = document.getElementById('saveRatesBtn');
+    const ratesStatus = document.getElementById('ratesStatus');
 
     let currentStaff = [];
     let currentShifts = [];
@@ -477,6 +650,7 @@
       currentStaff = await res.json();
       renderStaff();
       await loadAttendance();
+      await loadPayrollRates();
       renderDashboard();
     }
 
@@ -486,19 +660,19 @@
         const tr = document.createElement('tr');
         if (!s.activo) tr.className = 'inactive';
         tr.innerHTML = `
-  			  <td>${escapeHtml(s.nombre)}</td>
-  			<td>${escapeHtml(s.rol || '-')}</td>
-  			<td>${escapeHtml(s.pin)}</td>
-  			<td>$${Number(s.tarifaPorHora).toLocaleString()}</td>
-  			<td>${s.aplicaAuxilioTransporte ? '<span class="badge ok">Sí</span>' : '<span class="badge off">No</span>'}</td>
-  			<td>${s.activo ? '<span class="badge ok">Activo</span>' : '<span class="badge off">Inactivo</span>'}</td>
-  			<td>
-    			<button class="secondary small" data-edit="${s.id}">Editar</button>
-    			${s.activo
-      			? `<button class="secondary small" data-deactivate="${s.id}">Dar de baja</button>`
-      			: `<button class="secondary small" data-reactivate="${s.id}">Reactivar</button>`}
-  			</td>
-	`;
+          <td>${escapeHtml(s.nombre)}</td>
+          <td>${escapeHtml(s.rol || '-')}</td>
+          <td>${escapeHtml(s.pin)}</td>
+          <td>$${Number(s.tarifaPorHora).toLocaleString()}</td>
+          <td>${s.aplicaAuxilioTransporte ? '<span class="badge ok">Sí</span>' : '<span class="badge off">No</span>'}</td>
+          <td>${s.activo ? '<span class="badge ok">Activo</span>' : '<span class="badge off">Inactivo</span>'}</td>
+          <td>
+            <button class="secondary small" data-edit="${s.id}">Editar</button>
+            ${s.activo
+              ? `<button class="secondary small" data-deactivate="${s.id}">Dar de baja</button>`
+              : `<button class="secondary small" data-reactivate="${s.id}">Reactivar</button>`}
+          </td>
+        `;
         staffBody.appendChild(tr);
       }
 
@@ -513,7 +687,7 @@
           staffPinInput.value = '';
           staffPinInput.placeholder = `PIN actual: ${s.pin} (dejar vacio para no cambiar)`;
           staffTarifaInput.value = s.tarifaPorHora;
-	  staffAuxilioInput.checked = !!s.aplicaAuxilioTransporte; // ← nuevo
+          staffAuxilioInput.checked = !!s.aplicaAuxilioTransporte;
           staffNombreInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
       });
@@ -548,7 +722,7 @@
       staffPinInput.value = '';
       staffPinInput.placeholder = 'PIN de 4 digitos *';
       staffTarifaInput.value = '';
-      staffAuxilioInput.checked = false; // ← nuevo
+      staffAuxilioInput.checked = false;
       staffStatus.hidden = true;
     }
 
@@ -559,7 +733,7 @@
         nombre: staffNombreInput.value.trim(),
         rol: staffRolInput.value.trim(),
         tarifaPorHora: staffTarifaInput.value,
-    	             aplicaAuxilioTransporte: staffAuxilioInput.checked, // ← nuevo
+        aplicaAuxilioTransporte: staffAuxilioInput.checked,
       };
       if (staffPinInput.value.trim()) payload.pin = staffPinInput.value.trim();
       if (!id) payload.pin = payload.pin || staffPinInput.value.trim();
@@ -585,7 +759,6 @@
     });
 
     cancelStaffBtn.addEventListener('click', resetForm);
-
 
     // ============ Attendance ============
     const attendanceSearch = document.getElementById('attendanceSearch');
@@ -915,51 +1088,70 @@
         alert('Elegi un rango de fechas.');
         return;
       }
-      const desdeIso = new Date(payrollDesde.value + 'T00:00:00').toISOString();
-      const hastaIso = new Date(payrollHasta.value + 'T23:59:59').toISOString();
 
-      const res = await fetch(
-        `/api/superadmin/payroll?token=${encodeURIComponent(getToken())}&desde=${encodeURIComponent(desdeIso)}&hasta=${encodeURIComponent(hastaIso)}`
-      );
-      const data = await res.json();
-      if (!data.ok) {
-        alert(data.message || 'No se pudo calcular.');
-        return;
+      const loader = document.getElementById('payrollLoader');
+      const table = document.getElementById('payrollTable');
+      const calcularBtn = document.getElementById('calcularPayrollBtn');
+
+      try {
+        loader?.classList.add('active');
+        if (table) table.style.display = 'none';
+        exportCsvBtn.hidden = true;
+        if (calcularBtn) calcularBtn.disabled = true;
+
+        const desdeIso = new Date(payrollDesde.value + 'T00:00:00').toISOString();
+        const hastaIso = new Date(payrollHasta.value + 'T23:59:59').toISOString();
+
+        const res = await fetch(
+          `/api/superadmin/payroll?token=${encodeURIComponent(getToken())}&desde=${encodeURIComponent(desdeIso)}&hasta=${encodeURIComponent(hastaIso)}`
+        );
+        const data = await res.json();
+        if (!data.ok) {
+          alert(data.message || 'No se pudo calcular.');
+          return;
+        }
+
+        lastPayrollRange = { desde: payrollDesde.value, hasta: payrollHasta.value };
+
+        const totalAbiertos = data.rows.reduce((sum, r) => sum + r.turnosAbiertos, 0);
+        payrollWarning.hidden = totalAbiertos === 0;
+        if (totalAbiertos > 0) {
+          payrollWarning.textContent = `⚠️ Hay ${totalAbiertos} turno(s) sin fichar salida en este rango — no se cuentan en las horas hasta que se cierren.`;
+        }
+
+        if (!data.rows.length) {
+          payrollBody.innerHTML = '<tr><td colspan="11" class="empty-state">Nadie ficho turnos en este rango.</td></tr>';
+        } else {
+          payrollBody.innerHTML = data.rows
+            .map(
+              (r) => `
+            <tr>
+              <td>${escapeHtml(r.nombre)}</td>
+              <td>${escapeHtml(r.rol || '-')}</td>
+              <td>$${Number(r.tarifaPorHora).toLocaleString()}</td>
+              <td>${r.turnos}${r.turnosAbiertos ? ` (${r.turnosAbiertos} abierto)` : ''}</td>
+              <td>${r.horasTotales}h</td>
+              <td>${r.horasNocturnas}h</td>
+              <td>${r.horasDominicalFestivo}h</td>
+              <td>${r.horasExtra}h</td>
+              <td>${r.diasConAuxilio}</td>
+              <td>$${r.auxilioTransporte.toLocaleString()}</td>
+              <td><strong>$${r.total.toLocaleString()}</strong></td>
+            </tr>
+          `
+            )
+            .join('');
+        }
+
+        exportCsvBtn.hidden = false;
+      } catch (err) {
+        console.error('calcularPayroll error:', err);
+        alert('Ocurrio un error al calcular la nomina. Revisa la consola (F12) para mas detalle.');
+      } finally {
+        loader?.classList.remove('active');
+        if (table) table.style.display = '';
+        if (calcularBtn) calcularBtn.disabled = false;
       }
-
-      lastPayrollRange = { desde: payrollDesde.value, hasta: payrollHasta.value };
-
-      const totalAbiertos = data.rows.reduce((sum, r) => sum + r.turnosAbiertos, 0);
-      payrollWarning.hidden = totalAbiertos === 0;
-      if (totalAbiertos > 0) {
-        payrollWarning.textContent = `⚠️ Hay ${totalAbiertos} turno(s) sin fichar salida en este rango — no se cuentan en las horas hasta que se cierren.`;
-      }
-
-      if (!data.rows.length) {
-        payrollBody.innerHTML = '<tr><td colspan="9" class="empty-state">Nadie ficho turnos en este rango.</td></tr>';
-      } else {
-        payrollBody.innerHTML = data.rows
-  			.map(
-    				(r) => `
-		  <tr>
-    						<td>${escapeHtml(r.nombre)}</td>
-    						<td>${escapeHtml(r.rol || '-')}</td>
-    						<td>$${Number(r.tarifaPorHora).toLocaleString()}</td>
-    						<td>${r.turnos}${r.turnosAbiertos ? ` (${r.turnosAbiertos} abierto)` : ''}</td>
-    						<td>${r.horasTotales}h</td>
-    						<td>${r.horasNocturnas}h</td>
-    						<td>${r.horasDominicalFestivo}h</td>
-    						<td>${r.horasExtra}h</td>
-    						<td>${r.diasConAuxilio}</td>
-    						<td>$${r.auxilioTransporte.toLocaleString()}</td>
-    						<td><strong>$${r.total.toLocaleString()}</strong></td>
- 					 </tr>
-		`
-  			)
-  			.join('');
-      }
-
-      exportCsvBtn.hidden = false;
     }
 
     exportCsvBtn.addEventListener('click', () => {
@@ -968,6 +1160,123 @@
       const hastaIso = new Date(lastPayrollRange.hasta + 'T23:59:59').toISOString();
       const url = `/api/superadmin/payroll/csv?token=${encodeURIComponent(getToken())}&desde=${encodeURIComponent(desdeIso)}&hasta=${encodeURIComponent(hastaIso)}`;
       window.open(url, '_blank');
+    });
+
+    // ============ Recargos ============
+    let currentTiers = [];
+
+    async function loadPayrollRates() {
+      const res = await fetch(`/api/superadmin/payroll-rates?token=${encodeURIComponent(getToken())}`);
+      if (!res.ok) return;
+      const rates = await res.json();
+
+      // Los porcentajes se muestran multiplicados x100 (0.35 -> 35) para
+      // que sea mas natural de leer/editar, y se convierten de vuelta al
+      // guardar.
+      rateNightSurchargeInput.value = (rates.fixed.nightSurcharge * 100).toFixed(2);
+      rateExtraDayInput.value = (rates.fixed.extraDay * 100).toFixed(2);
+      rateExtraNightInput.value = (rates.fixed.extraNight * 100).toFixed(2);
+
+      currentTiers = rates.dominicalFestivoTiers.map((t) => ({ ...t }));
+      renderTiers();
+      renderCurrentTierBanner();
+    }
+
+    function renderTiers() {
+      tiersBody.innerHTML = currentTiers
+        .map(
+          (t, i) => `
+        <tr>
+          <td><input type="date" data-tier-field="vigenteDesde" data-tier-idx="${i}" value="${t.vigenteDesde || ''}" /></td>
+          <td><input type="date" data-tier-field="vigenteHasta" data-tier-idx="${i}" value="${t.vigenteHasta || ''}" /></td>
+          <td><input type="number" step="0.01" min="0" max="300" data-tier-field="recargo" data-tier-idx="${i}" value="${(t.recargo * 100).toFixed(2)}" style="width:90px;" /></td>
+          <td><button class="secondary small" data-remove-tier="${i}">Quitar</button></td>
+        </tr>
+      `
+        )
+        .join('');
+
+      tiersBody.querySelectorAll('[data-tier-field]').forEach((input) => {
+        input.addEventListener('change', () => {
+          const idx = Number(input.dataset.tierIdx);
+          const field = input.dataset.tierField;
+          if (field === 'recargo') {
+            currentTiers[idx][field] = Number(input.value) / 100;
+          } else {
+            currentTiers[idx][field] = input.value || null;
+          }
+          renderCurrentTierBanner();
+        });
+      });
+
+      tiersBody.querySelectorAll('[data-remove-tier]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          currentTiers.splice(Number(btn.dataset.removeTier), 1);
+          renderTiers();
+        });
+      });
+
+      renderCurrentTierBanner();
+    }
+
+    addTierBtn.addEventListener('click', () => {
+      currentTiers.push({ vigenteDesde: '', vigenteHasta: '', recargo: 0.9 });
+      renderTiers();
+    });
+
+    function renderCurrentTierBanner() {
+      const now = new Date();
+      const vigente = currentTiers.find((t) => {
+        if (!t.vigenteDesde) return false;
+        const desde = new Date(t.vigenteDesde);
+        const hasta = t.vigenteHasta ? new Date(t.vigenteHasta + 'T23:59:59') : null;
+        return now >= desde && (!hasta || now <= hasta);
+      });
+
+      const valueEl = document.getElementById('currentTierValue');
+      const rangeEl = document.getElementById('currentTierRange');
+
+      if (!vigente) {
+        valueEl.textContent = 'Sin tramo configurado para hoy';
+        rangeEl.textContent = 'Revisá el historial de abajo — falta un tramo que cubra la fecha actual.';
+        return;
+      }
+
+      valueEl.textContent = `${(vigente.recargo * 100).toFixed(0)}% de recargo`;
+      const desdeFmt = new Date(vigente.vigenteDesde).toLocaleDateString('es-CO');
+      const hastaFmt = vigente.vigenteHasta
+        ? new Date(vigente.vigenteHasta).toLocaleDateString('es-CO')
+        : 'sin fecha de fin (tramo actual)';
+      rangeEl.textContent = `Vigente desde el ${desdeFmt} hasta ${hastaFmt}`;
+    }
+
+    saveRatesBtn.addEventListener('click', async () => {
+      const payload = {
+        token: getToken(),
+        fixed: {
+          nightSurcharge: Number(rateNightSurchargeInput.value) / 100,
+          extraDay: Number(rateExtraDayInput.value) / 100,
+          extraNight: Number(rateExtraNightInput.value) / 100,
+        },
+        dominicalFestivoTiers: currentTiers,
+      };
+
+      const res = await fetch('/api/superadmin/payroll-rates', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      ratesStatus.hidden = false;
+      if (data.ok) {
+        ratesStatus.className = '';
+        ratesStatus.style.color = '#6fbf7f';
+        ratesStatus.textContent = 'Recargos guardados correctamente.';
+      } else {
+        ratesStatus.className = 'error-state';
+        ratesStatus.textContent = data.message || 'No se pudo guardar.';
+      }
     });
 
     // ============ Arranque ============
