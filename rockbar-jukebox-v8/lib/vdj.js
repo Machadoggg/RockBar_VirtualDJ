@@ -150,6 +150,8 @@ async function runQuery(config, script) {
  */
 async function getAutomixPaths(config) {
   const countResult = await runQuery(config, "file_count 'automix'");
+  //console.log(`[vdj-debug] file_count 'automix' respuesta cruda: "${countResult.text}" (ok=${countResult.ok})`);
+
   if (!countResult.ok) {
     return { ok: false, error: countResult.error, paths: [] };
   }
@@ -162,9 +164,11 @@ async function getAutomixPaths(config) {
   const paths = [];
   for (let i = 0; i < count; i++) {
     const result = await runQuery(config, `get_filepath 'automix' ${i}`);
+    //console.log(`[vdj-debug] get_filepath 'automix' ${i}: ok=${result.ok}, texto="${result.text}"`);
     if (result.ok && result.text) paths.push(result.text);
   }
 
+  //console.log(`[vdj-debug] Total: count=${count}, paths obtenidos=${paths.length}`);
   return { ok: true, paths };
 }
 

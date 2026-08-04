@@ -147,7 +147,7 @@
     } else if (status.credits > 0) {
       remainingInfo.textContent = `Sin pedidos de canciones por ahora, pero tenes ${status.credits} credito(s) para pedir igual`;
     } else if (status.nextFreeSlotAt) {
-      remainingInfo.textContent = `Sin pedidos de canciones. El proximo se habilita a las ${formatClock(status.nextFreeSlotAt)}`;
+      remainingInfo.textContent = `Sin pedidos. El proximo se habilita a las ${formatClock(status.nextFreeSlotAt)}`;
     } else {
       remainingInfo.textContent = `0 de ${cfg.requestsPerWindow} pedidos canciones disponibles`;
     }

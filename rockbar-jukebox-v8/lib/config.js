@@ -57,6 +57,11 @@ const config = {
   auxilioTransporteMensual: parseInt(process.env.AUXILIO_TRANSPORTE_MENSUAL, 10) || 0,
   auxilioTransporteDiasMes: parseInt(process.env.AUXILIO_TRANSPORTE_DIAS_MES, 10) || 30,
 
+  autoplayEnabled: (process.env.AUTOPLAY_ENABLED || 'true').toLowerCase() !== 'false',
+  autoplayCheckIntervalSeconds: parseInt(process.env.AUTOPLAY_CHECK_INTERVAL_SECONDS, 10) || 60,
+  autoplayMinQueue: parseInt(process.env.AUTOPLAY_MIN_QUEUE, 10) || 1,
+  autoplayHistorySize: parseInt(process.env.AUTOPLAY_HISTORY_SIZE, 10) || 5,
+
   adminToken: process.env.ADMIN_TOKEN || 'cambiar-esta-clave',
   barName: process.env.BAR_NAME || 'Rock Bar',
   superAdminToken: process.env.SUPER_ADMIN_TOKEN || null,

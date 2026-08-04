@@ -17,6 +17,8 @@ const missingSongs = require('./lib/missingSongs');
 const { scanSongs, getCategories } = require('./lib/songs');
 const payrollRates = require('./lib/payrollRates');
 
+const autoplay = require('./lib/autoplay');
+
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
@@ -57,7 +59,7 @@ function sanitizeNickname(raw) {
 // para siempre). Se cachea unos segundos para no golpear a VirtualDJ con
 // una consulta completa cada vez que un celular pide la lista.
 const AUTOMIX_CACHE_TTL_MS = 8000;
-let automixCache = { pathSet: new Set(), baseNameSet: new Set(), fetchedAt: 0, error: null };
+let automixCache = { pathSet: new Set(), baseNameSet: new Set(), count: 0, fetchedAt: 0, error: null };
 
 function baseNameOf(filePath) {
   // Las rutas de VirtualDJ siempre son de Windows (backslash), independiente
@@ -72,6 +74,7 @@ async function refreshAutomixCache() {
     automixCache = {
       pathSet: new Set(result.paths.map(vdj.normalizePath)),
       baseNameSet: new Set(result.paths.map(baseNameOf)),
+      count: result.paths.length, // ← nuevo: cantidad REAL de posiciones, sin deduplicar
       fetchedAt: Date.now(),
       error: null,
     };
@@ -90,6 +93,82 @@ async function getAutomixCache() {
   }
   return refreshAutomixCache();
 }
+
+
+let autoplayInFlight = false; // evita que dos chequeos se superpongan
+
+async function checkAutoplay() {
+  if (!config.autoplayEnabled) return;
+  if (autoplayInFlight) return;
+  autoplayInFlight = true;
+
+  try {
+    const cache = await refreshAutomixCache();
+    if (cache.error) {
+      if (config.debugVdj) console.log(`[autoplay] VirtualDJ no respondio: ${cache.error}`);
+      return;
+    }
+
+    const queueCount = cache.count;
+    if (config.debugVdj) console.log(`[autoplay] Chequeo — cola actual: ${queueCount} cancion(es).`);
+
+    if (queueCount > config.autoplayMinQueue) {
+      if (config.debugVdj) console.log(`[autoplay] Cola suficiente (${queueCount} > ${config.autoplayMinQueue}), no hago nada.`);
+      return;
+    }
+
+    const { error, songs } = scanSongs(config);
+    if (error || !songs.length) return;
+
+    const availableForClients = songs.filter((s) => !isSongQueued(s, cache));
+    if (!availableForClients.length) return;
+
+    const song = autoplay.pickAutoplaySong(availableForClients, config.autoplayHistorySize);
+    if (!song) return;
+
+    if (queueCount === 0 && config.vdjAutomixStartScript) {
+      console.log('[autoplay] Automix estaba vacio, activando motor de Automix...');
+      await vdj.runStep(config, config.vdjAutomixStartScript);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    const countBefore = cache.count;
+
+    const result = await vdj.addToAutomix(config, {
+      folder: path.dirname(song.fullPath),
+      baseName: song.baseName,
+    });
+
+    if (!result.ok) {
+      if (config.debugVdj) console.log(`[autoplay] No se pudo agregar: ${result.error}`);
+      return;
+    }
+
+    // Verificacion real: VDJ puede devolver "true" en el script aunque la
+    // cancion no haya quedado realmente en el Automix (esto pasa cuando
+    // el Automix arranca vacio y el motor no esta "activo"). Confirmamos
+    // consultando el conteo real despues de agregar.
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const verifyCache = await refreshAutomixCache();
+
+    if (verifyCache.ok !== false && verifyCache.count > countBefore) {
+      markRecentlyAdded(song);
+      autoplay.recordAutoplay(song);
+      console.log(`🎵 Automix bajo — se agrego automaticamente: "${song.title}"`);
+    } else {
+      console.log(`⚠️  Automix bajo — se INTENTO agregar "${song.title}" pero VirtualDJ no la sumo realmente (conteo antes=${countBefore}, despues=${verifyCache.count}). Revisar si el Automix esta activo.`);
+    }
+  } catch (err) {
+    if (config.debugVdj) console.log('[autoplay] Error inesperado:', err.message);
+  } finally {
+    autoplayInFlight = false;
+  }
+}
+
+if (config.autoplayEnabled) {
+  setInterval(checkAutoplay, config.autoplayCheckIntervalSeconds * 1000);
+}
+
 
 // Canciones que ESTA APP agrego hace poco. Mientras esten dentro del
 // margen de gracia, se muestran "En lista" SIEMPRE, sin importar lo que
@@ -391,6 +470,7 @@ app.listen(config.port, () => {
   console.log(`  Carpeta de videos: ${config.videosFolder || '(no configurada en .env)'}`);
   console.log(`  VirtualDJ Network Control: ${config.vdjHost}:${config.vdjPort}`);
   console.log(`  Limite: ${config.requestsPerWindow} pedidos cada ${config.requestWindowMinutes} min (+ creditos)`);
+  console.log(`>>> Proceso Node PID: ${process.pid} — iniciado ${new Date().toLocaleTimeString()}`);
   console.log('==========================================');
 });
 
@@ -546,6 +626,12 @@ app.put('/api/superadmin/payroll-rates', async (req, res) => {
   const result = await payrollRates.updateRates(req.body || {});
   if (!result.ok) return res.status(400).json(result);
   res.json(result);
+});
+
+
+app.get('/api/admin/autoplay-log', (req, res) => {
+  if (!checkAdminToken(req, res)) return;
+  res.json(autoplay.getRecentLog(30));
 });
 
 

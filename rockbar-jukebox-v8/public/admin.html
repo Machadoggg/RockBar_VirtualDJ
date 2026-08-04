@@ -211,6 +211,19 @@
           </table>
         </div>
 
+	<div class="stat-card">
+  	  <div class="label">Autopuestas hoy</div>
+  	  <div class="value" id="statAutoplay">—</div>
+	</div>
+
+	<div class="panel">
+  	  <h3>🔀 Canciones autopuestas (Automix vacío)</h3>
+  	    <table>
+    	      <thead><tr><th>Canción</th><th>Categoría</th><th>Hora</th></tr></thead>
+              <tbody id="autoplayLogBody"></tbody>
+            </table>
+	</div>
+
         <div class="panel">
           <h3>🎵 Ultimos pedidos</h3>
           <table>
@@ -505,6 +518,35 @@
       });
       loadSummary();
     });
+
+
+
+    async function loadAutoplayLog() {
+      const res = await fetch(`/api/admin/autoplay-log?token=${encodeURIComponent(getToken())}`);
+  	if (!res.ok) return;
+  	const log = await res.json();
+
+ 	 document.getElementById('statAutoplay').textContent = log.length;
+
+  	const body = document.getElementById('autoplayLogBody');
+  	if (!log.length) {
+    	body.innerHTML = '<tr><td colspan="3" class="empty-state">Ninguna cancion autopuesta todavia.</td></tr>';
+    	return;
+  	}
+  	body.innerHTML = log
+    	.slice(0, 10)
+    	.map(
+      	(a) => `
+    	<tr>
+      	  <td>${escapeHtml(a.title)}${a.artist ? ` — ${escapeHtml(a.artist)}` : ''}</td>
+          <td>${escapeHtml(a.category || '-')}</td>
+          <td>${new Date(a.at).toLocaleTimeString()}</td>
+    	</tr>
+  	`
+    	)
+    	.join('');
+     }
+
 
     // ============ Publicidad ============
     async function loadAds() {
