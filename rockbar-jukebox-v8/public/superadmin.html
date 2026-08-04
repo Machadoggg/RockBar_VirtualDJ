@@ -229,6 +229,10 @@
               <label class="field-label">Tarifa por hora *</label>
               <input id="staffTarifa" type="number" placeholder="6000" min="0" step="0.01" style="width:100%;" />
             </div>
+	    <div class="checkbox-row" style="margin-top:8px;">
+  	      <input type="checkbox" id="staffAuxilio" />
+  	      <label for="staffAuxilio">Aplica auxilio de transporte</label>
+	    </div>
           </div>
           <div class="row">
             <button class="action" id="saveStaffBtn">Guardar</button>
@@ -241,7 +245,15 @@
           <h3>👥 Colaboradores</h3>
           <table>
             <thead>
-              <tr><th>Nombre</th><th>Rol</th><th>PIN</th><th>Tarifa/hora</th><th>Estado</th><th></th></tr>
+              <tr>
+		<th>Nombre</th>
+		<th>Rol</th>
+		<th>PIN</th>
+		<th>Tarifa/hora</th>
+		<th>Auxilio/Transporte</th>
+		<th>Estado</th>
+		<th></th>
+	      </tr>
             </thead>
             <tbody id="staffBody"></tbody>
           </table>
@@ -331,7 +343,7 @@
       <section class="page" id="page-payroll">
         <div class="page-header">
           <h2>Nomina</h2>
-          <p>Calculo de horas y totales por periodo, con recargos de ley</p>
+          <p>Calculo de horas y totales por periodo, con recargos y axilios de ley</p>
         </div>
 
         <div class="panel">
@@ -356,7 +368,11 @@
         <div class="panel">
           <table>
             <thead>
-              <tr><th>Empleado</th><th>Rol</th><th>Tarifa/hora</th><th>Turnos</th><th>Horas tot.</th><th>Horas noct.</th><th>Horas dom/fest</th><th>Horas extra</th><th>Total</th></tr>
+              <tr>
+ 					 <th>Empleado</th><th>Rol</th><th>Tarifa/hora</th><th>Turnos</th>
+  					<th>Horas tot.</th><th>Horas noct.</th><th>Horas dom/fest</th><th>Horas extra</th>
+  					<th>Dias aux.</th><th>Auxilio transp.</th><th>Total</th>
+	      </tr>
             </thead>
             <tbody id="payrollBody"><tr><td colspan="9" class="empty-state">Elegi un periodo y presiona Calcular.</td></tr></tbody>
           </table>
@@ -398,6 +414,7 @@
     const saveStaffBtn = document.getElementById('saveStaffBtn');
     const cancelStaffBtn = document.getElementById('cancelStaffBtn');
     const staffStatus = document.getElementById('staffStatus');
+    const staffAuxilioInput = document.getElementById('staffAuxilio');
 
     const attendanceBody = document.getElementById('attendanceBody');
     const openShiftsWarning = document.getElementById('openShiftsWarning');
@@ -469,18 +486,19 @@
         const tr = document.createElement('tr');
         if (!s.activo) tr.className = 'inactive';
         tr.innerHTML = `
-          <td>${escapeHtml(s.nombre)}</td>
-          <td>${escapeHtml(s.rol || '-')}</td>
-          <td>${escapeHtml(s.pin)}</td>
-          <td>$${Number(s.tarifaPorHora).toLocaleString()}</td>
-          <td>${s.activo ? '<span class="badge ok">Activo</span>' : '<span class="badge off">Inactivo</span>'}</td>
-          <td>
-            <button class="secondary small" data-edit="${s.id}">Editar</button>
-            ${s.activo
-              ? `<button class="secondary small" data-deactivate="${s.id}">Dar de baja</button>`
-              : `<button class="secondary small" data-reactivate="${s.id}">Reactivar</button>`}
-          </td>
-        `;
+  			  <td>${escapeHtml(s.nombre)}</td>
+  			<td>${escapeHtml(s.rol || '-')}</td>
+  			<td>${escapeHtml(s.pin)}</td>
+  			<td>$${Number(s.tarifaPorHora).toLocaleString()}</td>
+  			<td>${s.aplicaAuxilioTransporte ? '<span class="badge ok">Sí</span>' : '<span class="badge off">No</span>'}</td>
+  			<td>${s.activo ? '<span class="badge ok">Activo</span>' : '<span class="badge off">Inactivo</span>'}</td>
+  			<td>
+    			<button class="secondary small" data-edit="${s.id}">Editar</button>
+    			${s.activo
+      			? `<button class="secondary small" data-deactivate="${s.id}">Dar de baja</button>`
+      			: `<button class="secondary small" data-reactivate="${s.id}">Reactivar</button>`}
+  			</td>
+	`;
         staffBody.appendChild(tr);
       }
 
@@ -495,6 +513,7 @@
           staffPinInput.value = '';
           staffPinInput.placeholder = `PIN actual: ${s.pin} (dejar vacio para no cambiar)`;
           staffTarifaInput.value = s.tarifaPorHora;
+	  staffAuxilioInput.checked = !!s.aplicaAuxilioTransporte; // ← nuevo
           staffNombreInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
       });
@@ -529,6 +548,7 @@
       staffPinInput.value = '';
       staffPinInput.placeholder = 'PIN de 4 digitos *';
       staffTarifaInput.value = '';
+      staffAuxilioInput.checked = false; // ← nuevo
       staffStatus.hidden = true;
     }
 
@@ -539,6 +559,7 @@
         nombre: staffNombreInput.value.trim(),
         rol: staffRolInput.value.trim(),
         tarifaPorHora: staffTarifaInput.value,
+    	             aplicaAuxilioTransporte: staffAuxilioInput.checked, // ← nuevo
       };
       if (staffPinInput.value.trim()) payload.pin = staffPinInput.value.trim();
       if (!id) payload.pin = payload.pin || staffPinInput.value.trim();
@@ -918,22 +939,24 @@
         payrollBody.innerHTML = '<tr><td colspan="9" class="empty-state">Nadie ficho turnos en este rango.</td></tr>';
       } else {
         payrollBody.innerHTML = data.rows
-          .map(
-            (r) => `
-          <tr>
-            <td>${escapeHtml(r.nombre)}</td>
-            <td>${escapeHtml(r.rol || '-')}</td>
-            <td>$${Number(r.tarifaPorHora).toLocaleString()}</td>
-            <td>${r.turnos}${r.turnosAbiertos ? ` (${r.turnosAbiertos} abierto)` : ''}</td>
-            <td>${r.horasTotales}h</td>
-            <td>${r.horasNocturnas}h</td>
-            <td>${r.horasDominicalFestivo}h</td>
-            <td>${r.horasExtra}h</td>
-            <td>$${r.total.toLocaleString()}</td>
-          </tr>
-        `
-          )
-          .join('');
+  			.map(
+    				(r) => `
+		  <tr>
+    						<td>${escapeHtml(r.nombre)}</td>
+    						<td>${escapeHtml(r.rol || '-')}</td>
+    						<td>$${Number(r.tarifaPorHora).toLocaleString()}</td>
+    						<td>${r.turnos}${r.turnosAbiertos ? ` (${r.turnosAbiertos} abierto)` : ''}</td>
+    						<td>${r.horasTotales}h</td>
+    						<td>${r.horasNocturnas}h</td>
+    						<td>${r.horasDominicalFestivo}h</td>
+    						<td>${r.horasExtra}h</td>
+    						<td>${r.diasConAuxilio}</td>
+    						<td>$${r.auxilioTransporte.toLocaleString()}</td>
+    						<td><strong>$${r.total.toLocaleString()}</strong></td>
+ 					 </tr>
+		`
+  			)
+  			.join('');
       }
 
       exportCsvBtn.hidden = false;

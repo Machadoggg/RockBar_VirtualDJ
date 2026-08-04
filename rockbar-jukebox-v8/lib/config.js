@@ -54,6 +54,9 @@ const config = {
 
   whatsappNumber: process.env.WHATSAPP_NUMBER || null,
 
+  auxilioTransporteMensual: parseInt(process.env.AUXILIO_TRANSPORTE_MENSUAL, 10) || 0,
+  auxilioTransporteDiasMes: parseInt(process.env.AUXILIO_TRANSPORTE_DIAS_MES, 10) || 30,
+
   adminToken: process.env.ADMIN_TOKEN || 'cambiar-esta-clave',
   barName: process.env.BAR_NAME || 'Rock Bar',
   superAdminToken: process.env.SUPER_ADMIN_TOKEN || null,

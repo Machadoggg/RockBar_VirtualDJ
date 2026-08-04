@@ -1,6 +1,7 @@
 const staff = require('./staff');
 const attendance = require('./attendance');
 const { isSundayOrHoliday } = require('./holidays');
+const config = require('./config');
 
 // Multiplicadores sobre el valor de la hora ordinaria diurna
 // (tarifaPorHora del empleado). Valores segun la normativa vigente
@@ -128,7 +129,18 @@ function computeTotals(desdeStr, hastaStr) {
       const horasDominicalFestivo = (buckets.ordinaryDaySH + buckets.ordinaryNightSH + buckets.extraDaySH + buckets.extraNightSH) / 60;
       const horasExtra = (buckets.extraDay + buckets.extraNight + buckets.extraDaySH + buckets.extraNightSH) / 60;
 
-      const total = payFromBuckets(buckets, emp.tarifaPorHora);
+      const totalHoras = payFromBuckets(buckets, emp.tarifaPorHora);
+
+      // --- Auxilio de transporte (Paso 1.3) ---
+      let auxilioTransporte = 0;
+      let diasConAuxilio = 0;
+      if (emp.aplicaAuxilioTransporte) {
+        diasConAuxilio = countWorkedDays(shiftsDelEmpleado, desde, hasta);
+        const valorDiario = config.auxilioTransporteMensual / config.auxilioTransporteDiasMes;
+        auxilioTransporte = Math.round(diasConAuxilio * valorDiario);
+      }
+
+      const total = Math.round(totalHoras) + auxilioTransporte;
 
       return {
         empleadoId: emp.id,
@@ -141,7 +153,9 @@ function computeTotals(desdeStr, hastaStr) {
         horasNocturnas: Math.round(horasNocturnas * 100) / 100,
         horasDominicalFestivo: Math.round(horasDominicalFestivo * 100) / 100,
         horasExtra: Math.round(horasExtra * 100) / 100,
-        total: Math.round(total),
+        diasConAuxilio,
+        auxilioTransporte,
+        total,
       };
     })
     .filter(Boolean);
@@ -149,10 +163,12 @@ function computeTotals(desdeStr, hastaStr) {
   return { ok: true, desde: desde.toISOString(), hasta: hasta.toISOString(), rows };
 }
 
+
 function toCsv(rows) {
   const header = [
     'Empleado', 'Rol', 'Tarifa/hora', 'Turnos', 'Turnos abiertos',
-    'Horas totales', 'Horas nocturnas', 'Horas dominical/festivo', 'Horas extra', 'Total a pagar',
+    'Horas totales', 'Horas nocturnas', 'Horas dominical/festivo', 'Horas extra',
+    'Dias con auxilio', 'Auxilio transporte', 'Total a pagar',
   ];
   const lines = [header.join(',')];
   for (const r of rows) {
@@ -167,11 +183,33 @@ function toCsv(rows) {
         r.horasNocturnas,
         r.horasDominicalFestivo,
         r.horasExtra,
+        r.diasConAuxilio,
+        r.auxilioTransporte,
         r.total,
       ].join(',')
     );
   }
   return lines.join('\n');
 }
+
+
+/**
+ * Cuenta cuantos dias CALENDARIO distintos tuvo el empleado con al menos
+ * un turno CERRADO (con salida) dentro del rango [desde, hasta]. Un mismo
+ * dia con 2 turnos (por ejemplo entrada temprano y otra entrada de noche)
+ * cuenta como 1 solo dia para el prorrateo del auxilio.
+ */
+function countWorkedDays(shifts, desde, hasta) {
+  const dias = new Set();
+  for (const t of shifts) {
+    if (!t.salida) continue; // turnos abiertos no cuentan para el prorrateo
+    const entrada = new Date(t.entrada);
+    if (entrada < desde || entrada > hasta) continue;
+    const key = `${entrada.getFullYear()}-${entrada.getMonth()}-${entrada.getDate()}`;
+    dias.add(key);
+  }
+  return dias.size;
+}
+
 
 module.exports = { computeTotals, toCsv, MULT };

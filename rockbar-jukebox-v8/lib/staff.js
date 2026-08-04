@@ -78,6 +78,7 @@ function createStaff(payload) {
       rol: payload.rol ? String(payload.rol).trim() : null,
       pin,
       tarifaPorHora,
+      aplicaAuxilioTransporte: payload.aplicaAuxilioTransporte === true, // ← nuevo, default false
       activo: true,
       fechaIngreso: new Date().toISOString(),
     };
@@ -122,6 +123,10 @@ function updateStaff(id, payload) {
       rol: payload.rol !== undefined ? String(payload.rol).trim() || null : current.rol,
       pin,
       tarifaPorHora,
+      aplicaAuxilioTransporte:
+        payload.aplicaAuxilioTransporte !== undefined
+          ? payload.aplicaAuxilioTransporte === true
+          : current.aplicaAuxilioTransporte, // ← nuevo
       activo: payload.activo !== undefined ? !!payload.activo : current.activo,
     };
 

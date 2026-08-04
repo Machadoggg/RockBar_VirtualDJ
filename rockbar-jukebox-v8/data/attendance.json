@@ -574,5 +574,23 @@
     "origen": "kiosco",
     "notas": null,
     "editadoPor": null
+  },
+  {
+    "id": 65,
+    "empleadoId": 1,
+    "entrada": "2026-07-31T22:56:49.826Z",
+    "salida": "2026-08-03T18:36:28.080Z",
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": null
+  },
+  {
+    "id": 66,
+    "empleadoId": 2,
+    "entrada": "2026-07-31T22:57:05.718Z",
+    "salida": "2026-08-03T18:35:52.007Z",
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": null
   }
 ]

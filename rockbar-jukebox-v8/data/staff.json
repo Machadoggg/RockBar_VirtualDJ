@@ -6,7 +6,8 @@
     "pin": "1234",
     "tarifaPorHora": 8338,
     "activo": true,
-    "fechaIngreso": "2026-07-29T13:54:53.786Z"
+    "fechaIngreso": "2026-07-29T13:54:53.786Z",
+    "aplicaAuxilioTransporte": true
   },
   {
     "id": 2,
@@ -15,6 +16,7 @@
     "pin": "4321",
     "tarifaPorHora": 8338,
     "activo": true,
-    "fechaIngreso": "2026-07-29T14:03:03.581Z"
+    "fechaIngreso": "2026-07-29T14:03:03.581Z",
+    "aplicaAuxilioTransporte": true
   }
 ]
