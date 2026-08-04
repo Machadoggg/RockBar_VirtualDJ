@@ -201,6 +201,21 @@
   }
   .game-hub-emoji { font-size: 1.8rem; }
 
+  .game-cooldown-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--red, #c81e3a);
+    background: rgba(200, 30, 58, 0.12);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 2px;
+  }
+
+  .game-hub-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
   /* ---------- Gate (bienvenida) centrado y comodo en mobile ---------- */
   .gate {
     display: flex; align-items: center; justify-content: center;
@@ -346,14 +361,17 @@
           <button class="game-hub-btn" data-game="duckhunt">
             <span class="game-hub-emoji">🦆</span>
             <span>Duck Hunt</span>
+            <span class="game-cooldown-label" data-cooldown-for="duckhunt" hidden></span>
           </button>
           <button class="game-hub-btn" data-game="beerjump">
             <span class="game-hub-emoji">🍺</span>
             <span>Beer Jump</span>
+            <span class="game-cooldown-label" data-cooldown-for="beerjump" hidden></span>
           </button>
           <button class="game-hub-btn" data-game="othello">
             <span class="game-hub-emoji">♟️</span>
             <span>Othello</span>
+            <span class="game-cooldown-label" data-cooldown-for="othello" hidden></span>
           </button>
         </div>
       </div>

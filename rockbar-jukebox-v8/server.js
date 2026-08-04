@@ -204,10 +204,16 @@ app.post('/api/credits/instagram', async (req, res) => {
 app.post('/api/credits/game', async (req, res) => {
   const deviceId = getOrSetDeviceId(req, res);
   const nightKey = getNightKey(new Date(), config.nightResetHour);
+  const { gameId } = req.body || {};
 
-  const result = await store.claimGameCredit(nightKey, deviceId, config.creditsPerGame, config.gameCooldownMinutes);
+  const validGames = ['duckhunt', 'beerjump', 'othello'];
+  if (!gameId || !validGames.includes(gameId)) {
+    return res.status(400).json({ ok: false, message: 'Falta indicar que juego se jugo.' });
+  }
+
+  const result = await store.claimGameCredit(nightKey, deviceId, gameId, config.creditsPerGame, config.gameCooldownMinutes);
   if (!result.ok) {
-    return res.status(429).json({ ok: false, message: 'Todavia no podes volver a jugar.', nextAvailableAt: result.nextAvailableAt, credits: result.credits });
+    return res.status(429).json({ ok: false, message: 'Todavia no podes volver a jugar este juego.', nextAvailableAt: result.nextAvailableAt, credits: result.credits });
   }
   res.json({ ok: true, awarded: result.awarded, credits: result.credits, message: `+${result.awarded} credito por jugar.` });
 });

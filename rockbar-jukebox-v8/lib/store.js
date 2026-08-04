@@ -68,6 +68,7 @@ function blankDevice() {
     creditLog: [],
     instagramClaimed: false,
     lastGameAt: null,
+    gamesLastPlayedAt: {}, // { duckhunt: iso, beerjump: iso, othello: iso }
   };
 }
 
@@ -117,17 +118,18 @@ function getDeviceStatus(nightKey, deviceId, config) {
 
   const windowStatus = computeWindowStatus(device, config.requestWindowMinutes, config.requestsPerWindow);
 
-  let gameAvailableAt = null;
-  if (device.lastGameAt) {
-    const nextAt = new Date(device.lastGameAt).getTime() + config.gameCooldownMinutes * 60 * 1000;
-    if (nextAt > Date.now()) gameAvailableAt = new Date(nextAt).toISOString();
+  const gamesAvailableAt = {};
+  const lastPlayed = device.gamesLastPlayedAt || {};
+  for (const gameId of Object.keys(lastPlayed)) {
+    const nextAt = new Date(lastPlayed[gameId]).getTime() + config.gameCooldownMinutes * 60 * 1000;
+    gamesAvailableAt[gameId] = nextAt > Date.now() ? new Date(nextAt).toISOString() : null;
   }
 
   return {
     nickname: device.nickname,
     credits: device.credits,
     instagramClaimed: device.instagramClaimed,
-    gameAvailableAt,
+    gamesAvailableAt,
     ...windowStatus,
   };
 }
@@ -231,22 +233,29 @@ function claimInstagramCredit(nightKey, deviceId, amount) {
 /**
  * Otorga credito por jugar, respetando el cooldown entre partidas.
  */
-function claimGameCredit(nightKey, deviceId, amount, cooldownMinutes) {
+/**
+ * Otorga credito por jugar UN juego especifico, respetando el cooldown
+ * de ESE juego en particular (cada uno de los 3 juegos tiene su propio
+ * cooldown independiente, no comparten timer).
+ */
+function claimGameCredit(nightKey, deviceId, gameId, amount, cooldownMinutes) {
   return withLock(() => {
     const data = readData();
     const night = ensureNight(data, nightKey);
     const device = ensureDevice(night, deviceId);
+    if (!device.gamesLastPlayedAt) device.gamesLastPlayedAt = {};
 
-    if (device.lastGameAt) {
-      const nextAt = new Date(device.lastGameAt).getTime() + cooldownMinutes * 60 * 1000;
+    const lastAt = device.gamesLastPlayedAt[gameId];
+    if (lastAt) {
+      const nextAt = new Date(lastAt).getTime() + cooldownMinutes * 60 * 1000;
       if (nextAt > Date.now()) {
         return { ok: false, reason: 'cooldown', nextAvailableAt: new Date(nextAt).toISOString(), credits: device.credits };
       }
     }
 
-    device.lastGameAt = new Date().toISOString();
+    device.gamesLastPlayedAt[gameId] = new Date().toISOString();
     device.credits += amount;
-    device.creditLog.push({ type: 'game', amount, at: new Date().toISOString() });
+    device.creditLog.push({ type: 'game', gameId, amount, at: new Date().toISOString() });
     writeData(data);
     return { ok: true, awarded: amount, credits: device.credits };
   });

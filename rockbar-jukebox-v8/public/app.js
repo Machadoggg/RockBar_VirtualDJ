@@ -458,9 +458,13 @@
   // es el que decide si corresponde credito o si todavia esta en cooldown
   // (ver /api/credits/game) — jugar cualquiera de ellos cuenta como "la
   // partida" del rato; no se puede sacar credito de mas jugando varios seguidos.
-  async function claimGameCredit() {
+  async function claimGameCredit(gameId) {
     try {
-      const res = await fetch('/api/credits/game', { method: 'POST' });
+      const res = await fetch('/api/credits/game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gameId }),
+      });
       const data = await res.json();
 
       gameResult.hidden = true;
@@ -473,8 +477,8 @@
       } else {
         gameCooldownMsg.hidden = false;
         gameCooldownMsg.textContent = data.nextAvailableAt
-          ? `Ya jugaste por ahora. Volve a intentar en ${formatMinutesLeft(data.nextAvailableAt)}.`
-          : 'Todavia no podes volver a jugar.';
+          ? `Ya jugaste este juego. Volve a intentar en ${formatMinutesLeft(data.nextAvailableAt)}.`
+          : 'Todavia no podes volver a jugar este juego.';
       }
       await refreshStatus();
       return data;
@@ -484,8 +488,8 @@
     }
   }
 
-  function isGameOnCooldown() {
-    return !!(status && status.gameAvailableAt && new Date(status.gameAvailableAt).getTime() > Date.now());
+  function isGameOnCooldown(gameId) {
+    return !!(status && status.gamesAvailableAt && status.gamesAvailableAt[gameId]);
   }
 
   // Carga (o recarga desde cero) el iframe de un juego embebido.
@@ -519,18 +523,62 @@
     });
   }
 
+  let cooldownTicker = null;
+
+  function formatCountdown(iso) {
+    const ms = new Date(iso).getTime() - Date.now();
+    if (ms <= 0) return null;
+    const totalSeconds = Math.ceil(ms / 1000);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `⏳ ${mins}:${String(secs).padStart(2, '0')}`;
+  }
+
+  function updateCooldownLabels() {
+    let anyActive = false;
+
+    gameHubBtns.forEach((btn) => {
+      const game = btn.dataset.game;
+      if (!IFRAME_GAMES[game]) return;
+
+      const label = btn.querySelector(`[data-cooldown-for="${game}"]`);
+      if (!label) return;
+
+      const availableAt = status && status.gamesAvailableAt ? status.gamesAvailableAt[game] : null;
+      const text = availableAt ? formatCountdown(availableAt) : null;
+
+      if (text) {
+        label.hidden = false;
+        label.textContent = text;
+        btn.disabled = true;
+        anyActive = true;
+      } else {
+        label.hidden = true;
+        btn.disabled = false;
+        // Si el cooldown acaba de vencer, refrescamos el status para
+        // que el resto de la UI (badges, etc.) tambien quede al dia.
+        if (availableAt) refreshStatus();
+      }
+    });
+
+    if (!anyActive) {
+      clearInterval(cooldownTicker);
+      cooldownTicker = null;
+    }
+  }
+
+  function startCooldownTicker() {
+    if (cooldownTicker) return;
+    cooldownTicker = setInterval(updateCooldownLabels, 1000);
+  }
+
   function openGameModal() {
     gameModal.hidden = false;
     showGameView('hub');
+    hubCooldownMsg.hidden = true;
 
-    if (isGameOnCooldown()) {
-      hubCooldownMsg.hidden = false;
-      hubCooldownMsg.textContent = `Ya jugaste por ahora. Volves a poder jugar en ${formatMinutesLeft(status.gameAvailableAt)}.`;
-      gameHubBtns.forEach((b) => (b.disabled = true));
-    } else {
-      hubCooldownMsg.hidden = true;
-      gameHubBtns.forEach((b) => (b.disabled = false));
-    }
+    updateCooldownLabels();
+    startCooldownTicker();
   }
 
   gamesBtn.addEventListener('click', openGameModal);
@@ -538,6 +586,8 @@
     stopDuckGame();
     Object.keys(IFRAME_GAMES).forEach(unloadIframeGame);
     gameModal.hidden = true;
+    clearInterval(cooldownTicker);
+    cooldownTicker = null;
   });
 
   gameHubBtns.forEach((btn) => {
@@ -559,17 +609,15 @@
   });
 
   // --- Ruleta ---
+  // Ruleta (juego oculto hoy, se deja funcional por si se reactiva)
   spinBtn.addEventListener('click', async () => {
     spinBtn.disabled = true;
     gameResult.hidden = true;
     gameCooldownMsg.hidden = true;
-
-    // Animacion de giro (puramente visual, el resultado real lo decide el servidor).
     wheelRotation += 1080 + Math.floor(Math.random() * 360);
     wheelEl.style.transform = `rotate(${wheelRotation}deg)`;
-
     await new Promise((resolve) => setTimeout(resolve, 1400));
-    await claimGameCredit();
+    await claimGameCredit('wheel');
     spinBtn.disabled = false;
   });
 
@@ -620,7 +668,7 @@
     } else {
       showToast('Se acabo el tiempo, pero igual sumaste tu credito por participar.');
     }
-    await claimGameCredit();
+    await claimGameCredit('duck');
   }
 
   duckStartBtn.addEventListener('click', () => {
@@ -679,7 +727,7 @@
         [...triviaOptionsEl.children].forEach((b) => (b.disabled = true));
         btn.classList.add(idx === item.correct ? 'correct' : 'wrong');
         showToast(idx === item.correct ? '¡Correcto! 🤘' : `Casi... la correcta era "${item.options[item.correct]}"`);
-        await claimGameCredit();
+        await claimGameCredit('trivia');
       });
       triviaOptionsEl.appendChild(btn);
     });
@@ -690,16 +738,16 @@
   // resultado al padre, asi que el credito se reclama con un boton
   // manual una vez que el usuario termino de jugar (mismo /api/credits/game
   // que los demas, con el mismo cooldown).
-  function wireIframeClaim(btn) {
+  function wireIframeClaim(btn, gameId) {
     btn.addEventListener('click', async () => {
       btn.disabled = true;
-      await claimGameCredit();
+      await claimGameCredit(gameId);
     });
   }
 
-  wireIframeClaim(duckHuntClaimBtn);
-  wireIframeClaim(beerJumpClaimBtn);
-  wireIframeClaim(othelloClaimBtn);
+  wireIframeClaim(duckHuntClaimBtn, 'duckhunt');
+  wireIframeClaim(beerJumpClaimBtn, 'beerjump');
+  wireIframeClaim(othelloClaimBtn, 'othello');
 
   // ---------- Pantalla de bienvenida (gate) ----------
   function openGate() {
