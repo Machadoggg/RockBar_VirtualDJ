@@ -102,4 +102,47 @@ function getCategories(config) {
   return [...set].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 }
 
-module.exports = { scanSongs, parseTitleArtist, getCategories, UNCATEGORIZED_LABEL };
+// ---------- Cache ----------
+// scanSongs() usa fs.readdirSync (SINCRONO Y BLOQUEANTE): mientras lee el
+// disco, Node se congela para TODOS los usuarios conectados a la vez, no
+// solo para quien pidio esa request. Con muchos celulares haciendo su
+// auto-refresh casi al mismo tiempo, eso se traduce en escaneos de disco
+// repetidos e innecesarios (el catalogo no cambia segundo a segundo).
+// Este cache evita releer la carpeta si el ultimo escaneo tiene menos de
+// CACHE_TTL_MS de antiguedad.
+const CACHE_TTL_MS = 8000;
+let songsCache = { result: null, fetchedAt: 0 };
+
+function scanSongsCached(config) {
+  const now = Date.now();
+  if (songsCache.result && now - songsCache.fetchedAt < CACHE_TTL_MS) {
+    return songsCache.result;
+  }
+  const result = scanSongs(config);
+  if (!result.error) {
+    songsCache = { result, fetchedAt: now };
+  }
+  return result;
+}
+
+/**
+ * Invalida el cache manualmente (por ejemplo justo despues de un pedido
+ * exitoso, para que el "En lista" se refleje al toque sin esperar el TTL).
+ */
+function invalidateSongsCache() {
+  songsCache = { result: null, fetchedAt: 0 };
+}
+
+function getCategoriesCached(config) {
+  const { songs } = scanSongsCached(config);
+  const set = new Set(songs.map((s) => s.category));
+  return [...set].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+}
+
+module.exports = {
+  scanSongs: scanSongsCached,
+  getCategories: getCategoriesCached,
+  invalidateSongsCache,
+  parseTitleArtist,
+  UNCATEGORIZED_LABEL,
+};

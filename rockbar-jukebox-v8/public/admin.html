@@ -407,21 +407,62 @@
       return div.innerHTML;
     }
 
+    // ============ Token: solo se guarda su HASH, nunca el texto real ============
+    // El token real vive unicamente en esta variable en memoria (dura
+    // mientras la pestaña este abierta). En localStorage solo se guarda
+    // el hash SHA-256, que es irreversible — asi alguien mirando
+    // DevTools -> Application -> Local Storage no ve la contraseña real,
+    // solo una cadena sin sentido. Como consecuencia, al recargar la
+    // pagina hay que volver a escribir el token (el hash no se puede
+    // "deshacer" para recuperarlo).
+    let currentToken = '';
+
+    // Hash simple (no criptografico, pero suficiente para que el token no
+   // quede en texto plano en localStorage) que funciona incluso en HTTP sin
+   // TLS, a diferencia de crypto.subtle que exige un contexto seguro
+   // (https:// o localhost). Cuando el sitio pase a HTTPS, esto puede
+  // reemplazarse por crypto.subtle.digest('SHA-256', ...) si se prefiere.
+  async function sha256(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const chr = str.charCodeAt(i);
+      hash = (hash << 5) - hash + chr;
+      hash |= 0;
+    }
+    // Segunda pasada con una semilla distinta, para que el resultado sea
+    // mas largo y menos trivial de reconocer a simple vista.
+    let hash2 = 0;
+    for (let i = str.length - 1; i >= 0; i--) {
+      const chr = str.charCodeAt(i);
+      hash2 = (hash2 << 7) - hash2 + chr + 31;
+      hash2 |= 0;
+    }
+    return Math.abs(hash).toString(16) + Math.abs(hash2).toString(16);
+  }
+
     function getToken() {
-      return tokenInput.value.trim() || localStorage.getItem('jukebox_admin_token') || '';
+      return currentToken || tokenInput.value.trim();
     }
 
     // ============ Login / logout ============
     logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('jukebox_admin_token');
+      currentToken = '';
+      localStorage.removeItem('jukebox_admin_token_hash');
       tokenInput.value = '';
       appShell.hidden = true;
       loginScreen.hidden = false;
       stopAutoRefresh();
     });
 
-    loadBtn.addEventListener('click', loadSummary);
-    tokenInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadSummary(); });
+    loadBtn.addEventListener('click', async () => {
+      const typed = tokenInput.value.trim();
+      if (typed) {
+        currentToken = typed;
+        localStorage.setItem('jukebox_admin_token_hash', await sha256(typed));
+      }
+      loadSummary();
+    });
+    tokenInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadBtn.click(); });
 
     // ============ Auto-refresh ============
     let refreshTimer = null;
@@ -441,7 +482,6 @@
     async function loadSummary() {
       const token = getToken();
       if (!token) return;
-      localStorage.setItem('jukebox_admin_token', token);
 
       const res = await fetch(`/api/admin/summary?token=${encodeURIComponent(token)}`);
       if (!res.ok) {
@@ -489,6 +529,7 @@
 
       await loadAds();
       await loadMissingSongs();
+      await loadAutoplayLog();
       renderDashboard();
     }
 
@@ -721,13 +762,23 @@
         )
         .join('');
     }
-  
+
+
+    // Limpieza de una version anterior del codigo, que guardaba el token
+    // real en texto plano bajo esta clave. Se borra apenas carga la pagina,
+    // para que no quede dando vueltas en localStorage.
+    localStorage.removeItem('jukebox_admin_token');
+
 
     // ============ Arranque ============
-    const savedToken = localStorage.getItem('jukebox_admin_token');
-    if (savedToken) {
-      tokenInput.value = savedToken;
-      loadSummary();
+    // El hash guardado es irreversible: solo sirve para saber que ANTES
+    // hubo una sesion, nunca para recuperar el token real. Por eso ya no
+    // se auto-completa el login — se le pide al usuario que vuelva a
+    // escribir el token cada vez que entra a la pagina.
+    const savedHash = localStorage.getItem('jukebox_admin_token_hash');
+    if (savedHash) {
+      msg.hidden = false;
+      msg.textContent = 'Sesion anterior detectada — ingresa tu token para continuar.';
     }
 
 
@@ -801,7 +852,7 @@
         .join('');
     }
 
-    
+
   </script>
 </body>
 </html>

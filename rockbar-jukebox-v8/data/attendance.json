@@ -610,5 +610,41 @@
     "origen": "kiosco",
     "notas": null,
     "editadoPor": null
+  },
+  {
+    "id": 69,
+    "empleadoId": 1,
+    "entrada": "2026-08-05T04:00:04.073Z",
+    "salida": "2026-08-05T05:42:12.710Z",
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": null
+  },
+  {
+    "id": 70,
+    "empleadoId": 2,
+    "entrada": "2026-08-05T04:00:11.304Z",
+    "salida": "2026-08-05T05:42:06.192Z",
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": null
+  },
+  {
+    "id": 71,
+    "empleadoId": 1,
+    "entrada": "2026-08-05T05:57:01.067Z",
+    "salida": "2026-08-05T05:58:46.175Z",
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": null
+  },
+  {
+    "id": 72,
+    "empleadoId": 2,
+    "entrada": "2026-08-05T05:57:10.031Z",
+    "salida": "2026-08-05T05:58:38.917Z",
+    "origen": "kiosco",
+    "notas": null,
+    "editadoPor": null
   }
 ]

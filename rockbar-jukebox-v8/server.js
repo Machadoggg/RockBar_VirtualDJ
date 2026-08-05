@@ -5,7 +5,6 @@ const cookieParser = require('cookie-parser');
 const QRCode = require('qrcode');
 
 const config = require('./lib/config');
-//const { scanSongs } = require('./lib/songs');
 const { getNightKey } = require('./lib/night');
 const store = require('./lib/store');
 const vdj = require('./lib/vdj');
@@ -14,7 +13,7 @@ const staff = require('./lib/staff');
 const attendance = require('./lib/attendance');
 const payroll = require('./lib/payroll');
 const missingSongs = require('./lib/missingSongs');
-const { scanSongs, getCategories } = require('./lib/songs');
+const { scanSongs, getCategories, invalidateSongsCache } = require('./lib/songs');
 const payrollRates = require('./lib/payrollRates');
 
 const autoplay = require('./lib/autoplay');
@@ -363,7 +362,10 @@ app.post('/api/request', async (req, res) => {
 
   // Queda "En lista" garantizado por config.automixRecentGraceMinutes,
   // pase lo que pase con la consulta en vivo mientras tanto.
-  markRecentlyAdded(song);
+  markRecentlyAdded(song);  
+  invalidateSongsCache(); // ← sin "scanSongs." adelante, sin "?." — es su propia función
+  //scanSongs.invalidateSongsCache?.(); // opcional: fuerza que el proximo /api/songs sea fresco
+
 
   res.json({
     ok: true,

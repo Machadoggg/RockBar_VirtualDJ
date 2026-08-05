@@ -9,7 +9,6 @@
   * { box-sizing: border-box; }
   body { margin: 0; }
 
-  /* ---------- Login screen ---------- */
   .login-screen {
     min-height: 100vh;
     display: flex;
@@ -38,7 +37,6 @@
     padding: 12px; font-weight: 600; cursor: pointer; font-size: 0.95rem;
   }
 
-  /* ---------- App shell ---------- */
   .app-shell { display: flex; min-height: 100vh; }
 
   .sidebar {
@@ -82,7 +80,6 @@
   .page { display: none; }
   .page.active { display: block; }
 
-  /* ---------- Stat cards ---------- */
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 28px; }
   .stat-card {
     background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
@@ -93,7 +90,6 @@
   .stat-card .value.warn { color: #e8b23d; }
   .stat-card .value.danger { color: var(--red); }
 
-  /* ---------- Panels / cards ---------- */
   .panel {
     background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
     padding: 22px 24px; margin-bottom: 22px;
@@ -140,70 +136,43 @@
     .main-area { padding: 20px 16px; }
   }
 
-  /* ---------- Loader vinilo (nomina) ---------- */
-  .vinyl-loader-overlay {
+  .neon-loader-overlay {
     display: none;
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    gap: 16px;
+    gap: 18px;
     padding: 40px 20px;
   }
-  .vinyl-loader-overlay.active {
+  .neon-loader-overlay.active {
     display: flex;
   }
 
-  .vinyl-disc {
-    width: 90px;
-    height: 90px;
+  .neon-loader {
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
-    background: repeating-radial-gradient(
-      circle at center,
-      #1a1a1a 0px,
-      #1a1a1a 3px,
-      #262626 4px,
-      #1a1a1a 5px
-    );
-    border: 3px solid #333;
-    position: relative;
-    animation: vinylSpin 1.1s linear infinite;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.5);
-  }
-  .vinyl-disc::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: var(--red);
-    transform: translate(-50%, -50%);
-    box-shadow: 0 0 0 2px #1a1a1a, 0 0 12px rgba(200,30,58,0.6);
-  }
-  .vinyl-disc::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #0a0a0a;
-    transform: translate(-50%, -50%);
+    border: 5px solid transparent;
+    border-top-color: var(--red, #c81e3a);
+    border-bottom-color: #e8b23d;
+    box-shadow:
+      0 0 12px var(--red, #c81e3a),
+      0 0 24px rgba(200, 30, 58, 0.5),
+      0 0 12px #e8b23d inset;
+    animation: neonSpin 1s linear infinite !important;
   }
 
-  @keyframes vinylSpin {
+  @keyframes neonSpin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }
 
-  .vinyl-loader-text {
+  .neon-loader-text {
     color: var(--text-dim);
     font-size: 0.9rem;
     text-align: center;
   }
-  .vinyl-loader-text strong {
+  .neon-loader-text strong {
     color: var(--text);
     display: block;
     margin-bottom: 4px;
@@ -213,7 +182,6 @@
 </head>
 <body>
 
-  <!-- ============ LOGIN ============ -->
   <div class="login-screen" id="loginScreen">
     <div class="login-card">
       <div class="icon">🔐</div>
@@ -225,7 +193,6 @@
     </div>
   </div>
 
-  <!-- ============ APP SHELL ============ -->
   <div class="app-shell" id="appShell" hidden>
     <aside class="sidebar">
       <div class="brand">
@@ -245,7 +212,6 @@
 
     <main class="main-area">
 
-      <!-- ---------- DASHBOARD ---------- -->
       <section class="page active" id="page-dashboard">
         <div class="page-header">
           <h2>Dashboard</h2>
@@ -276,7 +242,6 @@
         </div>
       </section>
 
-      <!-- ---------- EMPLEADOS ---------- -->
       <section class="page" id="page-staff">
         <div class="page-header">
           <h2>Empleados</h2>
@@ -335,7 +300,6 @@
 
       </section>
 
-      <!-- ---------- TURNOS ---------- -->
       <section class="page" id="page-attendance">
         <div class="page-header">
           <h2>Turnos fichados</h2>
@@ -413,7 +377,6 @@
 
       </section>
 
-      <!-- ---------- NOMINA ---------- -->
       <section class="page" id="page-payroll">
         <div class="page-header">
           <h2>Nomina</h2>
@@ -440,18 +403,14 @@
         <p id="payrollWarning" class="error-state" hidden></p>
 
         <div class="panel">
-          <div class="vinyl-loader-overlay" id="payrollLoader">
-            <div class="vinyl-disc"></div>
-            <div class="vinyl-loader-text">
+          <div class="neon-loader-overlay" id="payrollLoader">
+            <div class="neon-loader" id="neonLoaderRing"></div>
+            <div class="neon-loader-text">
               <strong>Calculando la nómina...</strong>
               Sumando horas, recargos y auxilios. Esto puede tardar unos segundos.
             </div>
           </div>
 
-          <!-- FIX: faltaba id="payrollTable" — sin este id, calcularPayroll()
-               no podia ocultar la tabla mientras giraba el loader, y como el
-               error explotaba ANTES del try, el loader quedaba pegado para
-               siempre. -->
           <table id="payrollTable">
             <thead>
               <tr>
@@ -468,7 +427,6 @@
         </div>
       </section>
 
-      <!-- ---------- RECARGOS ---------- -->
       <section class="page" id="page-recargos">
         <div class="page-header">
           <h2>Recargos de nómina</h2>
@@ -547,7 +505,6 @@
   </div>
 
   <script>
-    // ============ Navegacion entre paginas ============
     document.querySelectorAll('.nav-item').forEach((item) => {
       item.addEventListener('click', () => {
         document.querySelectorAll('.nav-item').forEach((i) => i.classList.remove('active'));
@@ -561,7 +518,6 @@
       });
     });
 
-    // ============ Elementos ============
     const loginScreen = document.getElementById('loginScreen');
     const appShell = document.getElementById('appShell');
     const tokenInput = document.getElementById('tokenInput');
@@ -614,44 +570,117 @@
       return div.innerHTML;
     }
 
-    function getToken() {
-      return tokenInput.value.trim() || localStorage.getItem('jukebox_superadmin_token') || '';
+    // Token: solo se guarda su HASH, nunca el texto real. El token real
+    // vive unicamente en esta variable en memoria (dura mientras la
+    // pestaña este abierta). En localStorage solo se guarda un hash,
+    // irreversible. No se usa crypto.subtle porque exige contexto seguro
+    // (https:// o localhost) y este sitio hoy corre en http:// plano.
+    let currentToken = '';
+
+    async function sha256(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const chr = str.charCodeAt(i);
+        hash = (hash << 5) - hash + chr;
+        hash |= 0;
+      }
+      let hash2 = 0;
+      for (let i = str.length - 1; i >= 0; i--) {
+        const chr = str.charCodeAt(i);
+        hash2 = (hash2 << 7) - hash2 + chr + 31;
+        hash2 |= 0;
+      }
+      return Math.abs(hash).toString(16) + Math.abs(hash2).toString(16);
     }
 
-    // ============ Login / logout ============
+    function getToken() {
+      return currentToken || tokenInput.value.trim();
+    }
+
     logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('jukebox_superadmin_token');
+      currentToken = '';
+      localStorage.removeItem('jukebox_superadmin_token_hash');
       tokenInput.value = '';
       appShell.hidden = true;
       loginScreen.hidden = false;
+      stopAutoRefresh();
     });
 
-    loadBtn.addEventListener('click', loadStaff);
-    tokenInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadStaff(); });
+    loadBtn.addEventListener('click', async () => {
+      const typed = tokenInput.value.trim();
+      if (typed) {
+        currentToken = typed;
+        localStorage.setItem('jukebox_superadmin_token_hash', await sha256(typed));
+      }
+      loadStaff();
+    });
+    tokenInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadBtn.click(); });
 
-    // ============ Staff ============
-    async function loadStaff() {
+    // Auto-refresh: refresca staff/turnos/dashboard cada 10s SIN volver a
+    // pedir el token (sigue en memoria mientras la pestaña este abierta).
+    // Un fallo de red no fuerza logout, solo se reintenta en el proximo
+    // ciclo — unicamente un 401 explicito del servidor (token invalido de
+    // verdad) hace volver a la pantalla de login.
+    let refreshTimer = null;
+    const AUTO_REFRESH_MS = 10000;
+
+    function stopAutoRefresh() {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+
+    function startAutoRefresh() {
+      if (refreshTimer) return;
+      refreshTimer = setInterval(() => {
+        refreshAllData({ silent: true });
+      }, AUTO_REFRESH_MS);
+    }
+
+    async function refreshAllData({ silent } = {}) {
       const token = getToken();
       if (!token) return;
-      localStorage.setItem('jukebox_superadmin_token', token);
 
-      const res = await fetch(`/api/superadmin/staff?token=${encodeURIComponent(token)}`);
-      if (!res.ok) {
+      let res;
+      try {
+        res = await fetch(`/api/superadmin/staff?token=${encodeURIComponent(token)}`);
+      } catch (err) {
+        if (!silent) {
+          msg.hidden = false;
+          msg.textContent = 'No se pudo conectar con el servidor.';
+        } else {
+          console.warn('refreshAllData: fallo de red, se reintenta en el proximo ciclo.', err);
+        }
+        return;
+      }
+
+      if (res.status === 401) {
         msg.hidden = false;
         msg.textContent = 'Token invalido.';
         loginScreen.hidden = false;
         appShell.hidden = true;
+        stopAutoRefresh();
         return;
       }
+
+      if (!res.ok) {
+        console.warn(`refreshAllData: el servidor respondio ${res.status}, se reintenta en el proximo ciclo.`);
+        return;
+      }
+
       msg.hidden = true;
       loginScreen.hidden = true;
       appShell.hidden = false;
+      startAutoRefresh();
 
       currentStaff = await res.json();
       renderStaff();
       await loadAttendance();
-      await loadPayrollRates();
       renderDashboard();
+    }
+
+    async function loadStaff() {
+      await refreshAllData({ silent: false });
+      await loadPayrollRates();
     }
 
     function renderStaff() {
@@ -698,7 +727,7 @@
           await fetch(`/api/superadmin/staff/${btn.dataset.deactivate}/deactivate?token=${encodeURIComponent(getToken())}`, {
             method: 'POST',
           });
-          loadStaff();
+          refreshAllData({ silent: false });
         });
       });
 
@@ -709,7 +738,7 @@
           });
           const data = await res.json();
           if (!data.ok) alert(data.message || 'No se pudo reactivar.');
-          loadStaff();
+          refreshAllData({ silent: false });
         });
       });
     }
@@ -755,12 +784,11 @@
       }
 
       resetForm();
-      loadStaff();
+      refreshAllData({ silent: false });
     });
 
     cancelStaffBtn.addEventListener('click', resetForm);
 
-    // ============ Attendance ============
     const attendanceSearch = document.getElementById('attendanceSearch');
     const attendanceEmpleadoFilter = document.getElementById('attendanceEmpleadoFilter');
     const attendanceOrigenFilter = document.getElementById('attendanceOrigenFilter');
@@ -957,7 +985,6 @@
       });
     });
 
-    // ---------- Exportar CSV de turnos ----------
     function shiftsToCsv(shifts) {
       const empleadosPorId = Object.fromEntries(currentStaff.map((s) => [s.id, s.nombre]));
       const header = ['Empleado', 'Entrada', 'Salida', 'Horas', 'Origen', 'Notas'];
@@ -1020,7 +1047,6 @@
       downloadCsv(shiftsToCsv(toExport), filename);
     });
 
-    // ============ Dashboard ============
     function renderDashboard() {
       const empleadosPorId = Object.fromEntries(currentStaff.map((s) => [s.id, s.nombre]));
       const activos = currentStaff.filter((s) => s.activo).length;
@@ -1046,7 +1072,6 @@
       }
     }
 
-    // ============ Payroll ============
     function pad(n) { return String(n).padStart(2, '0'); }
     function toDateInputValue(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
 
@@ -1083,6 +1108,24 @@
     document.getElementById('quincenaAnteriorBtn').addEventListener('click', () => { setQuincenaAnterior(); calcularPayroll(); });
     document.getElementById('calcularPayrollBtn').addEventListener('click', calcularPayroll);
 
+    let neonSpinAnimation = null;
+
+    function startNeonSpin() {
+      const ring = document.getElementById('neonLoaderRing');
+      if (!ring) return;
+      neonSpinAnimation = ring.animate(
+        [{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }],
+        { duration: 1000, iterations: Infinity, easing: 'linear' }
+      );
+    }
+
+    function stopNeonSpin() {
+      if (neonSpinAnimation) {
+        neonSpinAnimation.cancel();
+        neonSpinAnimation = null;
+      }
+    }
+
     async function calcularPayroll() {
       if (!payrollDesde.value || !payrollHasta.value) {
         alert('Elegi un rango de fechas.');
@@ -1095,6 +1138,7 @@
 
       try {
         loader?.classList.add('active');
+        startNeonSpin();
         if (table) table.style.display = 'none';
         exportCsvBtn.hidden = true;
         if (calcularBtn) calcularBtn.disabled = true;
@@ -1149,6 +1193,7 @@
         alert('Ocurrio un error al calcular la nomina. Revisa la consola (F12) para mas detalle.');
       } finally {
         loader?.classList.remove('active');
+        stopNeonSpin();
         if (table) table.style.display = '';
         if (calcularBtn) calcularBtn.disabled = false;
       }
@@ -1162,7 +1207,6 @@
       window.open(url, '_blank');
     });
 
-    // ============ Recargos ============
     let currentTiers = [];
 
     async function loadPayrollRates() {
@@ -1170,9 +1214,6 @@
       if (!res.ok) return;
       const rates = await res.json();
 
-      // Los porcentajes se muestran multiplicados x100 (0.35 -> 35) para
-      // que sea mas natural de leer/editar, y se convierten de vuelta al
-      // guardar.
       rateNightSurchargeInput.value = (rates.fixed.nightSurcharge * 100).toFixed(2);
       rateExtraDayInput.value = (rates.fixed.extraDay * 100).toFixed(2);
       rateExtraNightInput.value = (rates.fixed.extraNight * 100).toFixed(2);
@@ -1279,11 +1320,18 @@
       }
     });
 
-    // ============ Arranque ============
-    const savedToken = localStorage.getItem('jukebox_superadmin_token');
-    if (savedToken) {
-      tokenInput.value = savedToken;
-      loadStaff();
+    // Limpieza de la version anterior del codigo, que guardaba el token
+    // real en texto plano bajo esta clave.
+    localStorage.removeItem('jukebox_superadmin_token');
+
+    // El hash guardado es irreversible: solo sirve para saber que ANTES
+    // hubo una sesion, nunca para recuperar el token real. Por eso no se
+    // auto-completa el login. Una vez adentro, el auto-refresh cada 10s
+    // mantiene los datos al dia sin volver a pedir el token.
+    const savedHash = localStorage.getItem('jukebox_superadmin_token_hash');
+    if (savedHash) {
+      msg.hidden = false;
+      msg.textContent = 'Sesion anterior detectada — ingresa tu token para continuar.';
     }
   </script>
 </body>
